@@ -19,9 +19,14 @@ lib64/
 parts/
 sdist/
 var/
+onefile_dist/
+onefile_build/
+onefolder_dist/
+onefolder_build/
 *.egg-info/
 .installed.cfg
 *.egg
+*.bat
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -55,3 +60,7 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Eclipse IDE
+.project
+.pydevproject
