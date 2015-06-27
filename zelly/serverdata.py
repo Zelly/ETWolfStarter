@@ -61,7 +61,7 @@ class ServerData:
             Server['laststatus'] = None
             Server['fs_game']    = None
         jsonfile = open(filename,'w')
-        json.dump({'fs_basepath':self.fs_basepath,'fs_homepath':self.fs_homepath,'ETPath':self.ETPath,'parameters':self.parameters,'Servers':self.Servers},jsonfile,skipkeys=True,allow_nan=False, sort_keys=True, indent=4)
+        json.dump({'fs_basepath':self.fs_basepath,'fs_homepath':self.fs_homepath,'ETPath':self.ETPath,'parameters':self.parameters,'Servers':self.Servers},jsonfile,skipkeys=True,allow_nan=True, sort_keys=True, indent=4)
         print("Saved %d servers" % len(self.Servers))
         
         
