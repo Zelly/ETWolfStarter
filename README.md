@@ -4,6 +4,18 @@ Wolfenstein: Enemy Territory launcher.
 * Add servers to favourites, and see who is on the server.
 * Customize per servers file(a collection of related server favourites) or per server your parameters,paths, and executable.
 
+## Changes
+### 1.1.0
+* Added a sort of error log wrapper. Saves to wolfstarter.log. Look in there if there are unknown issues.
+* Added more color options
+* Added option to disable adding fs_game gamename to startup parameters. **launchmod** in wolfstarter.json
+* Added a check to make sure you have the mod folder in your basepath, if not then default to etmain.
+* Added a minimize button(Unfortunately cannot minimize to tray sorry)
+* Added a notice label at the bottom telling you you do not need fsbasepath and fshomepath.  
+Also when selecting a server it will tell you all the arguments it is using and in what order.
+* Updated the arrangement of the entry fields to make more sense
+* Updated scrolling in serverlist to synchronize all categories
+
 ![fbe074dd4e26b59ad8e9412d77761b6b](https://cloud.githubusercontent.com/assets/705940/8338982/f9057732-1a79-11e5-858d-aef47f1fe0a0.png)
 
 ## Choosing a package to download
