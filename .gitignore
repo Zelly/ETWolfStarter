@@ -23,6 +23,7 @@ onefile_dist/
 onefile_build/
 onefolder_dist/
 onefolder_build/
+releases/
 *.egg-info/
 .installed.cfg
 *.egg

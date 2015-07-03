@@ -1,5 +1,5 @@
 import json
-from os import getcwd
+from os import getcwd,rename
 from os.path import isfile, join, isdir
 from re import compile
 from subprocess import call
@@ -10,26 +10,36 @@ import tkinter.messagebox
 import tkinter.simpledialog
 
 from zelly.serverdata import ServerData
+BLACK      = "#000000"
+DARK_GREY  = "#282828"
+GREY       = "#484848"
+LIGHT_GREY = "#E0E0E0"
+WHITE      = "#FFFFFF"
+Config = {
+          # WINDOW AND FRAME
+          'WINDOW_BACKGROUND'          : WHITE,
+          'WINDOW_BORDER'              : BLACK,
+          'NAVBAR_BACKGROUND'          : DARK_GREY,
+          'HEADER_BACKGROUND'          : WHITE,
+          'SERVERLIST_BACKGROUND'      : WHITE,
+          'SERVERDATA_BACKGROUND'      : WHITE,
+          'SERVERSTATUS_BACKGROUND'    : WHITE,
+          'ENTRY_BACKGROUND'           : LIGHT_GREY,
+          'ENTRY_FOREGROUND'           : BLACK,
+          'LIST_SELECT_FORE'           : WHITE,
+          'LIST_SELECT_BACK'           : DARK_GREY,
+          'BUTTON_BACKGROUND'          : DARK_GREY,
+          'BUTTON_FOREGROUND'          : WHITE,
+          'A_BUTTON_BACKGROUND'        : LIGHT_GREY,
+          'A_BUTTON_FOREGROUND'        : BLACK,
+          'BROWSE_BUTTON_BACKGROUND'   : DARK_GREY,
+          'BROWSE_BUTTON_FOREGROUND'   : WHITE,
+          'BROWSE_A_BUTTON_BACKGROUND' : LIGHT_GREY,
+          'BROWSE_A_BUTTON_FOREGROUND' : BLACK,
+          'servers'                    : join(getcwd(), 'servers.json'),
+          'launchmod'                  : True,
+          }
 
-WINDOW_BACKGROUND        = "#FFFFFF"  # "#F8F8F8"
-WINDOW_BORDER            = "#000008"
-ENTRY_BACKGROUND         = "#FFFFF9"
-ENTRY_FOREGROUND         = "#000000"
-LIST_SELECT_FORE         = "#FFFFFF"
-LIST_SELECT_BACK         = "#00001F"
-BUTTON_BACKGROUND        = "#B280B2"  # 0099F0
-BUTTON_FOREGROUND        = "#FFFFFF"
-A_BUTTON_BACKGROUND      = "#660066"  # 0000FF
-A_BUTTON_FOREGROUND      = "#FFFFFF"
-BROWSE_BUTTON_BACKGROUND   = "#B280B2"  # 0099F0
-BROWSE_BUTTON_FOREGROUND   = "#FFFFFF"
-BROWSE_A_BUTTON_BACKGROUND = "#660066"  # 0000FF
-BROWSE_A_BUTTON_FOREGROUND = "#FFFFFF"
-NAVBAR_BACKGROUND        = "#B280B2"
-HEADER_BACKGROUND        = "#FFFFFF"
-SERVERLIST_BACKGROUND    = "#FFFFFF"
-SERVERDATA_BACKGROUND    = "#FFFFFF"
-SERVERSTATUS_BACKGROUND  = "#FFFFFF"
 PLAYER_NAME_LENGTH       = 32
 PLAYER_PING_LENGTH       = 8
 PLAYER_SCORE_LENGTH      = 12
@@ -44,14 +54,15 @@ def logfile(msg): # Probably bad way of doing this oh well
         errorlog.write('%s\n' % msg)
 
 class MenuButton(Button):
-    def __init__(self, master=None, column=0, row=0, cnf={}, **kw):
-        Button.__init__(self, master, cnf, **kw)
-        self.master = master
+    def __init__(self, parent=None, column=0, row=0, cnf={}, **kw):
+        Button.__init__(self, parent, cnf, **kw)
+        self.parent = parent
+        logfile("Making button with background %s" % Config['BUTTON_BACKGROUND'])
         self.config(
-                    background=BUTTON_BACKGROUND,
-                    foreground=BUTTON_FOREGROUND,
-                    activebackground=A_BUTTON_BACKGROUND,
-                    activeforeground=A_BUTTON_FOREGROUND,
+                    background=Config['BUTTON_BACKGROUND'],
+                    foreground=Config['BUTTON_FOREGROUND'],
+                    activebackground=Config['A_BUTTON_BACKGROUND'],
+                    activeforeground=Config['A_BUTTON_FOREGROUND'],
                     borderwidth=0,
                     width=5,
                     height=2,
@@ -72,20 +83,29 @@ class NavBar(Frame):
         Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.config(
-                   background=NAVBAR_BACKGROUND , cursor="hand1"
+                   background=Config['NAVBAR_BACKGROUND'] , cursor="hand1"
                    )
-        self.button_open = MenuButton(self , 0 , text="Open..."    , command=parent.openfile)
-        self.button_saveas = MenuButton(self , 1 , text="Save..."  , command=parent.saveasfile)
+        self.button_open     = MenuButton(self , 0 , text="Open..."    , command=parent.openfile)
+        self.button_saveas   = MenuButton(self , 1 , text="Save..."  , command=parent.saveasfile)
         self.button_minimize = MenuButton(self , 6 , text="Minimize"  , command=self.minimize)
-        self.button_quit = MenuButton(self , 7 , text="Quit"       , command=parent.quit)
+        self.button_quit     = MenuButton(self , 7 , text="Quit"       , command=parent.quit)
+        self.button_test     = MenuButton(self , 5 , text="TEST",command=self.test)
         
         self.button_open.show()
         self.button_saveas.show()
         self.button_minimize.show()
         self.button_quit.show()
+        self.button_test.show()
         
         self.grid(column=0, row=0, sticky=N + W + E + S)
         # self.columnconfigure(10,weight=1)
+    def test(self):
+        logfile("Renaming wolfstarter")
+        rename('WolfStarter.exe','WolfStarter_old')
+        logfile("Renaming updater")
+        rename('WolfStarter_Update.exe','WolfStarter.exe')
+        self.parent.quit()
+        call('WolfStarter.exe')
     def minimize(self):
         # I guess tkinter does not have the ability to go to system tray
         self.parent.parent.overrideredirect(False)
@@ -94,10 +114,10 @@ class BrowseButton(Button):
     def __init__(self, master=None, dir_var=None, cnf={}, **kw):
         Button.__init__(self, master, cnf, **kw)
         self.parent = master
-        self.config(background=BROWSE_BUTTON_BACKGROUND,
-                    foreground=BROWSE_BUTTON_FOREGROUND,
-                    activebackground=BROWSE_A_BUTTON_BACKGROUND,
-                    activeforeground=BROWSE_A_BUTTON_FOREGROUND,
+        self.config(background=Config['BROWSE_BUTTON_BACKGROUND'],
+                    foreground=Config['BROWSE_BUTTON_FOREGROUND'],
+                    activebackground=Config['BROWSE_A_BUTTON_BACKGROUND'],
+                    activeforeground=Config['BROWSE_A_BUTTON_FOREGROUND'],
                     borderwidth=0,
                     # width           = 5,
                     # height          = 2,
@@ -109,16 +129,16 @@ class ServerFrame(Frame):
         Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         
-        self.config(background=WINDOW_BACKGROUND, padx=5, pady=5)
+        self.config(background=Config['WINDOW_BACKGROUND'], padx=5, pady=5)
         
         font = tkinter.font.Font(family="Courier New", size=10)
         self.currentline = 1
-        self.header_frame = Frame(self, background=HEADER_BACKGROUND)
+        self.header_frame = Frame(self, background=Config['HEADER_BACKGROUND'])
         
         # Global ETPath
         self.etpath_var = StringVar()
-        self.etpath_label = Label(self.header_frame, text="ET: ", font=font, background=HEADER_BACKGROUND)
-        self.etpath_entry = Entry(self.header_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.etpath_var)
+        self.etpath_label = Label(self.header_frame, text="ET: ", font=font, background=Config['HEADER_BACKGROUND'])
+        self.etpath_entry = Entry(self.header_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.etpath_var)
         self.etpath_browse = BrowseButton(self.header_frame, text="Browse...", command=lambda :self.getfilepath(self.etpath_var, self.updateconfig))
         self.etpath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
         self.etpath_label.grid(row=0, column=0, sticky=N + W)
@@ -127,8 +147,8 @@ class ServerFrame(Frame):
         
         # Global fs_basepath
         self.fs_basepath_var = StringVar()
-        self.fs_basepath_label = Label(self.header_frame, text="fs_basepath: ", font=font, background=HEADER_BACKGROUND)
-        self.fs_basepath_entry = Entry(self.header_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.fs_basepath_var)
+        self.fs_basepath_label = Label(self.header_frame, text="fs_basepath: ", font=font, background=Config['HEADER_BACKGROUND'])
+        self.fs_basepath_entry = Entry(self.header_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_basepath_var)
         self.fs_basepath_browse = BrowseButton(self.header_frame, text="Browse...", command=lambda :self.getpath(self.fs_basepath_var, self.updateconfig))
         self.fs_basepath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
         self.fs_basepath_label.grid(row=1, column=0, sticky=N + W)
@@ -137,8 +157,8 @@ class ServerFrame(Frame):
         
         # Global fs_homepath
         self.fs_homepath_var = StringVar()
-        self.fs_homepath_label = Label(self.header_frame, text="fs_homepath: ", font=font, background=HEADER_BACKGROUND)
-        self.fs_homepath_entry = Entry(self.header_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.fs_homepath_var)
+        self.fs_homepath_label = Label(self.header_frame, text="fs_homepath: ", font=font, background=Config['HEADER_BACKGROUND'])
+        self.fs_homepath_entry = Entry(self.header_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_homepath_var)
         self.fs_homepath_browse = BrowseButton(self.header_frame, text="Browse...", command=lambda :self.getpath(self.fs_homepath_var, self.updateconfig))
         self.fs_homepath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
         self.fs_homepath_label.grid(row=2, column=0, sticky=N + W)
@@ -147,8 +167,8 @@ class ServerFrame(Frame):
         
         # Global Parameters
         self.parameters_var = StringVar()
-        self.parameters_label = Label(self.header_frame, text="Parameters: ", font=font, background=HEADER_BACKGROUND)
-        self.parameters_entry = Entry(self.header_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.parameters_var)
+        self.parameters_label = Label(self.header_frame, text="Parameters: ", font=font, background=Config['HEADER_BACKGROUND'])
+        self.parameters_entry = Entry(self.header_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.parameters_var)
         self.parameters_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
         self.parameters_label.grid(row=3, column=0, sticky=N + W)
         self.parameters_entry.grid(row=3, column=1, sticky=N + W + E)
@@ -159,16 +179,16 @@ class ServerFrame(Frame):
         if self.parent.serverdata.ETPath: self.etpath_var.set(self.parent.serverdata.ETPath)
         
         # Server List Frame
-        self.serverlist_frame = Frame(self, background=SERVERLIST_BACKGROUND)
+        self.serverlist_frame = Frame(self, background=Config['SERVERLIST_BACKGROUND'])
         
         # Server List Titles
-        self.servers_label = Label(self.serverlist_frame, text="Title", font=font, background=SERVERLIST_BACKGROUND)
+        self.servers_label = Label(self.serverlist_frame, text="Title", font=font, background=Config['SERVERLIST_BACKGROUND'])
         self.servers = Listbox(self.serverlist_frame, width=25, relief="flat",
                                borderwidth=0,
                                font=font,
-                               selectbackground=LIST_SELECT_BACK,
+                               selectbackground=Config['LIST_SELECT_BACK'],
                                selectborderwidth=0,
-                               selectforeground=LIST_SELECT_FORE,
+                               selectforeground=Config['LIST_SELECT_FORE'],
                                exportselection=0,
                                activestyle="none")
         self.servers.bind("<<ListboxSelect>>", self.selectserver)
@@ -178,13 +198,13 @@ class ServerFrame(Frame):
         self.servers.grid(row=1, column=0, sticky=N + W + E)
         
         # Server Map
-        self.servermap_label = Label(self.serverlist_frame, text="Map", font=font, background=SERVERLIST_BACKGROUND)
+        self.servermap_label = Label(self.serverlist_frame, text="Map", font=font, background=Config['SERVERLIST_BACKGROUND'])
         self.servermap = Listbox(self.serverlist_frame, width=10, relief="flat",
                                borderwidth=0,
                                font=font,
-                               selectbackground=LIST_SELECT_BACK,
+                               selectbackground=Config['LIST_SELECT_BACK'],
                                selectborderwidth=0,
-                               selectforeground=LIST_SELECT_FORE,
+                               selectforeground=Config['LIST_SELECT_FORE'],
                                exportselection=0,
                                activestyle="none")
         self.servermap.bind("<<ListboxSelect>>", self.selectserver)
@@ -194,13 +214,13 @@ class ServerFrame(Frame):
         self.servermap.grid(row=1, column=1, sticky=N + W + E)
         
         # Server Players
-        self.serverplayers_label = Label(self.serverlist_frame, text="Players", font=font, background=SERVERLIST_BACKGROUND)
+        self.serverplayers_label = Label(self.serverlist_frame, text="Players", font=font, background=Config['SERVERLIST_BACKGROUND'])
         self.serverplayers = Listbox(self.serverlist_frame, width=10, relief="flat",
                                borderwidth=0,
                                font=font,
-                               selectbackground=LIST_SELECT_BACK,
+                               selectbackground=Config['LIST_SELECT_BACK'],
                                selectborderwidth=0,
-                               selectforeground=LIST_SELECT_FORE,
+                               selectforeground=Config['LIST_SELECT_FORE'],
                                exportselection=0,
                                activestyle="none")
         self.serverplayers.bind("<<ListboxSelect>>", self.selectserver)
@@ -210,13 +230,13 @@ class ServerFrame(Frame):
         self.serverplayers.grid(row=1, column=2, sticky=N + W + E)
         
         # Server Ping
-        self.serverping_label = Label(self.serverlist_frame, text="Ping", font=font, background=SERVERLIST_BACKGROUND)
+        self.serverping_label = Label(self.serverlist_frame, text="Ping", font=font, background=Config['SERVERLIST_BACKGROUND'])
         self.serverping = Listbox(self.serverlist_frame, width=10, relief="flat",
                                borderwidth=0,
                                font=font,
-                               selectbackground=LIST_SELECT_BACK,
+                               selectbackground=Config['LIST_SELECT_BACK'],
                                selectborderwidth=0,
-                               selectforeground=LIST_SELECT_FORE,
+                               selectforeground=Config['LIST_SELECT_FORE'],
                                exportselection=0,
                                activestyle="none")
         self.serverping.bind("<<ListboxSelect>>", self.selectserver)
@@ -226,34 +246,34 @@ class ServerFrame(Frame):
         self.serverping.grid(row=1, column=3, sticky=N + W + E)
         
         # Server Data Frame
-        self.serverdata_frame = Frame(self, background=SERVERDATA_BACKGROUND)
+        self.serverdata_frame = Frame(self, background=Config['SERVERDATA_BACKGROUND'])
         
         # Server title
         self.servertitle_var = StringVar()
-        self.servertitle_label = Label(self.serverdata_frame, text="Title: ", font=font, background=SERVERDATA_BACKGROUND)
-        self.servertitle_entry = Entry(self.serverdata_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.servertitle_var)
+        self.servertitle_label = Label(self.serverdata_frame, text="Title: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
+        self.servertitle_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.servertitle_var)
         self.servertitle_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
         self.servertitle_label.grid(row=0, column=0, sticky=N + W)
         self.servertitle_entry.grid(row=0, column=1, sticky=N + W + E)
         
         # Server Password
         self.serverpassword_var = StringVar()
-        self.serverpassword_label = Label(self.serverdata_frame, text="Password: ", font=font, background=SERVERDATA_BACKGROUND)
-        self.serverpassword_entry = Entry(self.serverdata_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.serverpassword_var)
+        self.serverpassword_label = Label(self.serverdata_frame, text="Password: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverpassword_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverpassword_var)
         self.serverpassword_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
         
         # Server address
         self.serveraddress_var = StringVar()
-        self.serveraddress_label = Label(self.serverdata_frame, text="Address: ", font=font, background=SERVERDATA_BACKGROUND)
-        self.serveraddress_entry = Entry(self.serverdata_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.serveraddress_var)
+        self.serveraddress_label = Label(self.serverdata_frame, text="Address: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
+        self.serveraddress_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveraddress_var)
         self.serveraddress_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
         self.serveraddress_label.grid(row=2, column=0, sticky=N + W)
         self.serveraddress_entry.grid(row=2, column=1, sticky=N + W + E)
         
         # Server ETPath
         self.serveretpath_var = StringVar()
-        self.serveretpath_label = Label(self.serverdata_frame, text="ET: ", font=font, background=SERVERDATA_BACKGROUND)
-        self.serveretpath_entry = Entry(self.serverdata_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.serveretpath_var)
+        self.serveretpath_label = Label(self.serverdata_frame, text="ET: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
+        self.serveretpath_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveretpath_var)
         self.serveretpath_browse = BrowseButton(self.serverdata_frame, text="Browse...", command=lambda :self.getfilepath(self.serveretpath_var, self.updateserver))
         self.serveretpath_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
         self.serveretpath_label.grid(row=3, column=0, sticky=N + W)
@@ -262,8 +282,8 @@ class ServerFrame(Frame):
         
         # Server fs_basepath
         self.serverfs_basepath_var = StringVar()
-        self.serverfs_basepath_label = Label(self.serverdata_frame, text="fs_basepath: ", font=font, background=SERVERDATA_BACKGROUND)
-        self.serverfs_basepath_entry = Entry(self.serverdata_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.serverfs_basepath_var)
+        self.serverfs_basepath_label = Label(self.serverdata_frame, text="fs_basepath: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverfs_basepath_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_basepath_var)
         self.serverfs_basepath_browse = BrowseButton(self.serverdata_frame, text="Browse...", command=lambda :self.getpath(self.serverfs_basepath_var, self.updateserver))
         self.serverfs_basepath_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
         self.serverfs_basepath_label.grid(row=4, column=0, sticky=N + W)
@@ -272,8 +292,8 @@ class ServerFrame(Frame):
         
         # Server fs_homepath
         self.serverfs_homepath_var = StringVar()
-        self.serverfs_homepath_label = Label(self.serverdata_frame, text="fs_homepath: ", font=font, background=SERVERDATA_BACKGROUND)
-        self.serverfs_homepath_entry = Entry(self.serverdata_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.serverfs_homepath_var)
+        self.serverfs_homepath_label = Label(self.serverdata_frame, text="fs_homepath: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverfs_homepath_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_homepath_var)
         self.serverfs_homepath_browse = BrowseButton(self.serverdata_frame, text="Browse...", command=lambda :self.getpath(self.serverfs_homepath_var, self.updateserver))
         self.serverfs_homepath_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
         self.serverfs_homepath_label.grid(row=5, column=0, sticky=N + W)
@@ -282,18 +302,18 @@ class ServerFrame(Frame):
         
         # Server extra parameters
         self.serverparams_var = StringVar()
-        self.serverparams_label = Label(self.serverdata_frame, text="Parameters: ", font=font, background=SERVERDATA_BACKGROUND)
-        self.serverparams_entry = Entry(self.serverdata_frame, font=font, background=ENTRY_BACKGROUND, foreground=ENTRY_FOREGROUND, textvariable=self.serverparams_var)
+        self.serverparams_label = Label(self.serverdata_frame, text="Parameters: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverparams_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverparams_var)
         self.serverparams_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
         self.serverparams_label.grid(row=6, column=0, sticky=N + W)
         self.serverparams_entry.grid(row=6, column=1, sticky=N + W + E)
         
         # Server Status Frame #
-        self.serverstatus_frame = Frame(self, background=WINDOW_BACKGROUND)
+        self.serverstatus_frame = Frame(self, background=Config['SERVERSTATUS_BACKGROUND'])
         
         self.text = Text(
                          self.serverstatus_frame,
-                         background=WINDOW_BACKGROUND,
+                         background=Config['SERVERSTATUS_BACKGROUND'],
                          font=font,
                          relief="flat",
                          wrap="none",
@@ -301,11 +321,11 @@ class ServerFrame(Frame):
                          height=29,
                          )
 
-        self.text.tag_config("headerLine", foreground=BUTTON_FOREGROUND, background=BUTTON_BACKGROUND, underline=1)
+        self.text.tag_config("headerLine", foreground=Config['BUTTON_FOREGROUND'], background=Config['BUTTON_BACKGROUND'], underline=1)
         
         self.text.grid(sticky=W + N)
         
-        self.text_scroll = Scrollbar(self.serverstatus_frame, command=self.text.yview, background=BUTTON_BACKGROUND)
+        self.text_scroll = Scrollbar(self.serverstatus_frame, command=self.text.yview, background=Config['BUTTON_BACKGROUND'])
         self.text.config(yscrollcommand=self.text_scroll.set)
         self.text_scroll.grid(row=0, column=1, sticky="ns")
         # End Server Status Frame #
@@ -327,7 +347,7 @@ class ServerFrame(Frame):
         
         self.notice_var = StringVar()
         self.notice_var.set("FS_Basepath and FS_Homepath are not required.\nThey will be set to the folder of you ET.exe if not specfied.")
-        self.notice_label = Label(self,font=font,background=WINDOW_BACKGROUND,textvariable=self.notice_var)
+        self.notice_label = Label(self,font=font,background=Config['WINDOW_BACKGROUND'],textvariable=self.notice_var)
         self.notice_label.grid(row=4, column=0, sticky=N + W,rowspan=2)
         
         
@@ -437,7 +457,7 @@ class ServerFrame(Frame):
         if not fs_homepath:
             fs_homepath = fs_basepath
             
-        if self.parent.Config['launchmod']:
+        if Config['launchmod']:
             if "gamename" in Server['cvar']:
                 fs_game = Server['cvar']['gamename']
             if not isdir(join(fs_basepath,fs_game)):
@@ -630,12 +650,13 @@ class Window(Frame):
         self.focus_ignore = False
         self.parent       = Tk()
         self.serverdata   = ServerData()
-        self.Config       = {}
         self.serversframe = None
         
         Frame.__init__(self, self.parent, *args, **kwargs)
         
-        self.config(background=WINDOW_BACKGROUND)
+        self.load_config()
+        
+        self.config(background=Config['WINDOW_BACKGROUND'])
         
         self.navbar = NavBar(self)
         self.grid()
@@ -648,41 +669,21 @@ class Window(Frame):
         # self.parent.bind("<FocusOut>"        , self.OnLostFocus)
         
         self.parent.overrideredirect(True)
-        self.parent.config(background=WINDOW_BORDER, padx=5, pady=5)  # Set padding and background color
+        self.parent.config(background=Config['WINDOW_BORDER'], padx=5, pady=5)  # Set padding and background color
         self.parent.title("WolfStarter by Zelly")
         self.parent.bind("<FocusIn>"         , self.OnFocus)
         self.parent.bind("<FocusOut>"        , self.OnLostFocus)
         
-        self.load_config()
+        
+        self.serverdata   = ServerData()
+        self.serverdata.load_serverfile(Config['servers'])
+        self.serversframe = ServerFrame(self)
         
         self.parent.mainloop()
         # Handle Errors
         # Check if window already exists before creating new one
     def load_config(self):
-        global WINDOW_BACKGROUND, WINDOW_BORDER, ENTRY_BACKGROUND, ENTRY_FOREGROUND, LIST_SELECT_FORE, LIST_SELECT_BACK, BUTTON_BACKGROUND, BUTTON_FOREGROUND, A_BUTTON_BACKGROUND, A_BUTTON_FOREGROUND,BROWSE_BUTTON_BACKGROUND,BROWSE_BUTTON_FOREGROUND,BROWSE_A_BUTTON_BACKGROUND,BROWSE_A_BUTTON_FOREGROUND,NAVBAR_BACKGROUND,HEADER_BACKGROUND,SERVERLIST_BACKGROUND,SERVERDATA_BACKGROUND,SERVERSTATUS_BACKGROUND
-        self.Config = {
-                       'servers'             : join(getcwd(), 'servers.json'),
-                       'launchmod'           : True,
-                       'WINDOW_BACKGROUND'   : "#FFFFFF",  # "#F8F8F8"
-                       'WINDOW_BORDER'       : "#000008",
-                       'ENTRY_BACKGROUND'    : "#FFFFF9",
-                       'ENTRY_FOREGROUND'    : "#000000",
-                       'LIST_SELECT_FORE'    : "#FFFFFF",
-                       'LIST_SELECT_BACK'    : "#00001F",
-                       'BUTTON_BACKGROUND'   : "#B280B2",  # 0099F0
-                       'BUTTON_FOREGROUND'   : "#FFFFFF",
-                       'A_BUTTON_BACKGROUND' : "#660066",  # 0000FF
-                       'A_BUTTON_FOREGROUND' : "#FFFFFF",
-                       'BROWSE_BUTTON_BACKGROUND'   : "#B280B2",
-                       'BROWSE_BUTTON_FOREGROUND'   : "#FFFFFF",
-                       'BROWSE_A_BUTTON_BACKGROUND' : "#660066",
-                       'BROWSE_A_BUTTON_FOREGROUND' : "#FFFFFF",
-                       'NAVBAR_BACKGROUND'          : "#B280B2",
-                       'HEADER_BACKGROUND'          : "#FFFFFF",
-                       'SERVERLIST_BACKGROUND'      : "#FFFFFF",
-                       'SERVERDATA_BACKGROUND'      : "#FFFFFF",
-                       'SERVERSTATUS_BACKGROUND'    : "#FFFFFF",
-                       }
+        #global Config
         
         if not isfile(join(getcwd() , 'wolfstarter.json')):
             logfile("Config not found using default")
@@ -691,43 +692,15 @@ class Window(Frame):
                 jsondata = json.load(configfile)
             if jsondata:
                 for key in jsondata:
-                    self.Config[key] = jsondata[key]
-            for key in ['servers', 'WINDOW_BACKGROUND', 'WINDOW_BORDER', 'ENTRY_BACKGROUND', 'ENTRY_FOREGROUND',
-                        'LIST_SELECT_FORE', 'LIST_SELECT_BACK', 'BUTTON_BACKGROUND', 'BUTTON_FOREGROUND',
-                        'A_BUTTON_BACKGROUND', 'A_BUTTON_FOREGROUND','BROWSE_BUTTON_BACKGROUND',
-                        'BROWSE_BUTTON_FOREGROUND','BROWSE_A_BUTTON_BACKGROUND','BROWSE_A_BUTTON_FOREGROUND','NAVBAR_BACKGROUND','HEADER_BACKGROUND','SERVERLIST_BACKGROUND','SERVERDATA_BACKGROUND','SERVERSTATUS_BACKGROUND'
-                        ]:
-                if key in jsondata: self.Config[key] = jsondata[key]
-                
-        WINDOW_BACKGROUND   = self.Config['WINDOW_BACKGROUND']
-        WINDOW_BORDER       = self.Config['WINDOW_BORDER']
-        ENTRY_BACKGROUND    = self.Config['ENTRY_BACKGROUND']
-        ENTRY_FOREGROUND    = self.Config['ENTRY_FOREGROUND']
-        LIST_SELECT_FORE    = self.Config['LIST_SELECT_FORE']
-        LIST_SELECT_BACK    = self.Config['LIST_SELECT_BACK']
-        BUTTON_BACKGROUND   = self.Config['BUTTON_BACKGROUND']
-        BUTTON_FOREGROUND   = self.Config['BUTTON_FOREGROUND']
-        A_BUTTON_BACKGROUND = self.Config['A_BUTTON_BACKGROUND']
-        A_BUTTON_FOREGROUND = self.Config['A_BUTTON_FOREGROUND']
-        BROWSE_BUTTON_BACKGROUND   = self.Config['BROWSE_BUTTON_BACKGROUND']
-        BROWSE_BUTTON_FOREGROUND   = self.Config['BROWSE_BUTTON_FOREGROUND']
-        BROWSE_A_BUTTON_BACKGROUND = self.Config['BROWSE_A_BUTTON_BACKGROUND']
-        BROWSE_A_BUTTON_FOREGROUND = self.Config['BROWSE_A_BUTTON_FOREGROUND']
-        NAVBAR_BACKGROUND          = self.Config['NAVBAR_BACKGROUND']
-        HEADER_BACKGROUND          = self.Config['HEADER_BACKGROUND']
-        SERVERLIST_BACKGROUND      = self.Config['SERVERLIST_BACKGROUND']
-        SERVERDATA_BACKGROUND      = self.Config['SERVERDATA_BACKGROUND']
-        SERVERSTATUS_BACKGROUND    = self.Config['SERVERSTATUS_BACKGROUND']
-        
-        self.serverdata   = ServerData()
-        self.serverdata.load_serverfile(self.Config['servers'])
-        
-        self.serversframe = ServerFrame(self)
+                    if key in Config:
+                        Config[key] = jsondata[key]
+                        logfile(key.ljust(32) + " = " + str(jsondata[key]))
+                    # Make sure to only do keys that exist.
     def save_config(self):
         # If changes then ask to save
-        self.serverdata.save_serverfile(self.Config['servers'])
+        self.serverdata.save_serverfile(Config['servers'])
         jsonfile = open(join(getcwd() , 'wolfstarter.json'), 'w')
-        json.dump(self.Config, jsonfile, skipkeys=True, allow_nan=True, sort_keys=True, indent=4)
+        json.dump(Config, jsonfile, skipkeys=True, allow_nan=True, sort_keys=True, indent=4)
     def destroy_sub_windows(self):
         pass
     # Opening and closing files and application
@@ -742,15 +715,13 @@ class Window(Frame):
         if not fname or not isfile(fname):
             tkinter.messagebox.showinfo(title="Invalid servers file", message="Servers file was not found", parent=self)
             self.focus_ignore = False
-            # self.parent.focus_force()
             logfile("Invalid Servers file was not found %s" % fname)
-            # self.Config['servers'] = join( )
             return
-        self.focus_ignore = False
-        self.Config['servers'] = fname
+        self.focus_ignore      = False
+        Config['servers']      = fname
         self.serverdata        = ServerData()
-        self.serverdata.load_serverfile(self.Config['servers'])
-        logfile("Loaded Servers file: %s" % self.Config['servers'])
+        self.serverdata.load_serverfile(Config['servers'])
+        logfile("Loaded Servers file: %s" % Config['servers'])
         if self.serversframe:
             self.serversframe.destroy()
         self.serversframe = ServerFrame(self)
@@ -769,9 +740,9 @@ class Window(Frame):
             logfile("Invalid Servers file was not found %s" % fname)
             return
         self.focus_ignore      = False
-        self.Config['servers'] = fname
-        self.serverdata.save_serverfile(self.Config['servers'])
-        logfile("Saved servers file %s" % self.Config['servers'])
+        Config['servers']      = fname
+        self.serverdata.save_serverfile(Config['servers'])
+        logfile("Saved servers file %s" % Config['servers'])
     def quit(self):
         self.save_config()
         self.parent.destroy()
