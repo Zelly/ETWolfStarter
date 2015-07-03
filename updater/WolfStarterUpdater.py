@@ -5,6 +5,7 @@ from socket import timeout
 from subprocess import call
 from zipfile import is_zipfile,ZipFile
 from shutil import copyfileobj
+from sys import argv
 
 WOLFSTARTER_VERSION_U = "v1.2.0"
 with open('version.txt','wb') as versionfile: versionfile.write(WOLFSTARTER_VERSION_U.encode())
@@ -20,7 +21,7 @@ def versiontoint(version):
     if isinstance(version,int):
         return version
     elif isinstance(version,str):
-        version = version.translate(None,'v.')
+        version = version.replace('v','').replace('.','')
     else:
         return None
     
@@ -88,8 +89,12 @@ def check_update():
     if int_wolfstarter_version < int_version:
         update(version)
         return True
-def main():
-    check_update()
-    if isfile('WolfStarter.exe'): call("WolfStarter.exe")
     
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    print(argv)
+    print(len(argv))
+    if argv and len(argv) >= 2 and argv[1].lower() == "--no-update":
+        print("Running from script, cannot validate executables")
+    else:
+        check_update()
+        if isfile('WolfStarter.exe'): call("WolfStarter.exe")

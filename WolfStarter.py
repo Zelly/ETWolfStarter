@@ -9,7 +9,7 @@ from os import remove
 from shutil import copyfileobj
 from zipfile import is_zipfile,ZipFile
 from subprocess import call
-from sys import exit
+from sys import exit,argv
 
 WOLFSTARTER_VERSION = "v1.2.0"
 
@@ -34,7 +34,7 @@ def versiontoint(version):
     if isinstance(version,int):
         return version
     elif isinstance(version,str):
-        version = version.translate(None,'v.')
+        version = version.replace('v','').replace('.','')
     else:
         return None
     
@@ -58,8 +58,10 @@ def check_updater_update():
         logfile("Invalid data received from update server")
         return False
     
+    logfile("Found version %s" % version)
     # Missing updater entirely
     # Download updater
+    # not found during debugging, could pose problem
     if not isdir('updater') or not isfile('updater/version.txt') or not isfile('updater/WolfStarterUpdater.exe'):
         update_updater(version)
         return True
@@ -133,7 +135,17 @@ def check_update():
     if int_wolfstarter_version < int_version:
         update(version)
         return True
-def main(args=None):
+    
+if __name__ == '__main__':
+    logfile(argv)
+    if argv and len(argv) > 1 and ( argv[1].lower() == "-n" or argv[1].lower() == "--no-update" ):
+        print("Skipping update")
+    else:
+        check_updater_update()
+        if check_update(): exit(0)
+        
+    
+    logfile("Program Start")
     try:
         Window()
     except:
@@ -141,12 +153,4 @@ def main(args=None):
         lines = format_exception(e1,e2,e3)
         logfile(''.join(''+line for line in lines))
         raise
-
-
-if __name__ == '__main__':
-    check_updater_update()
-    if check_update(): exit(0)
-    
-    logfile("Program Start")
-    main()
     logfile("Program End")

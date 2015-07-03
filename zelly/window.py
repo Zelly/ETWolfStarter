@@ -1,5 +1,5 @@
 import json
-from os import getcwd,rename
+from os import getcwd
 from os.path import isfile, join, isdir
 from re import compile
 from subprocess import call
@@ -89,23 +89,14 @@ class NavBar(Frame):
         self.button_saveas   = MenuButton(self , 1 , text="Save..."  , command=parent.saveasfile)
         self.button_minimize = MenuButton(self , 6 , text="Minimize"  , command=self.minimize)
         self.button_quit     = MenuButton(self , 7 , text="Quit"       , command=parent.quit)
-        self.button_test     = MenuButton(self , 5 , text="TEST",command=self.test)
         
         self.button_open.show()
         self.button_saveas.show()
         self.button_minimize.show()
         self.button_quit.show()
-        self.button_test.show()
         
         self.grid(column=0, row=0, sticky=N + W + E + S)
         # self.columnconfigure(10,weight=1)
-    def test(self):
-        logfile("Renaming wolfstarter")
-        rename('WolfStarter.exe','WolfStarter_old')
-        logfile("Renaming updater")
-        rename('WolfStarter_Update.exe','WolfStarter.exe')
-        self.parent.quit()
-        call('WolfStarter.exe')
     def minimize(self):
         # I guess tkinter does not have the ability to go to system tray
         self.parent.parent.overrideredirect(False)
@@ -423,7 +414,6 @@ class ServerFrame(Frame):
         if not Server:
             logfile("Error updating server %d" % self.getselection()[0])
             return
-        logfile("Joining server %s" % Server['title'])
         # Generate Startup Line #
         etpath      = ''
         fs_basepath = ''
@@ -486,9 +476,15 @@ class ServerFrame(Frame):
         # End command line generate #
         logfile(command_line)
         return command_line
-    def joinserver(self):
+    def joinserver(self,e):
         command_line = self.getcommandline()
         if not command_line: return
+        if not self.getselection(): return
+        Server = self.parent.serverdata.Servers[self.getselection()[0]]
+        if not Server:
+            logfile("Error updating server %d" % self.getselection()[0])
+            return
+        logfile("Joining server %s" % Server['title'])
         call(command_line)
     def getcolortags(self, textstr):
         pass
@@ -563,10 +559,13 @@ class ServerFrame(Frame):
             self.serverstatus_frame.grid(row=0, column=1, sticky=N + W, rowspan=3)
     # Events
     def OnMouseWheel(self, event):
-        self.servers.yview("scroll", event.delta,"units")
-        self.servermap.yview("scroll", event.delta,"units")
-        self.serverping.yview("scroll", event.delta,"units")
-        self.serverplayers.yview("scroll", event.delta,"units")
+        #print(event.delta)
+        delta = event.delta*-1
+        #print(delta)
+        self.servers.yview("scroll", delta,"units")
+        self.servermap.yview("scroll", delta,"units")
+        self.serverping.yview("scroll", delta,"units")
+        self.serverplayers.yview("scroll", delta,"units")
         return "break"
     def selectserver(self, e):
         selectid = self.getselection()

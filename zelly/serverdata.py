@@ -151,7 +151,7 @@ class ServerData:
         ADDRESS = (IP,PORT)
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.settimeout(2.0)
+            s.settimeout(0.5)
         except OSError as e:
             s.close()
             print("Error creating socket for %s:%d" % ADDRESS)
