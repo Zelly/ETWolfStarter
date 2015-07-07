@@ -14,7 +14,8 @@ def zipdir(path,zippath):
             zipH.write(join(root,file))
     zipH.close()
     chdir(cwd)
-if __name__ == "__main__":
+    
+def main():
     version = input("What version tag are you using? ")
     input("Is v%s correct? (If not then do Ctrl+C)" % version)
     
@@ -22,12 +23,12 @@ if __name__ == "__main__":
     if isdir(releasedir): input("That version folder already exists, do you wish to overwrite? (Ctrl+C to cancel)")
     if not exists(releasedir) or not isdir(releasedir): makedirs(releasedir)
     print("Building WolfStarter")
-    call("pyinstaller --distpath=./onefile_dist --workpath=./onefile_build -y -w --onefile WolfStarter.py")
-    call("pyinstaller --distpath=./onefolder_dist --workpath=./onefolder_build -y -w --onedir WolfStarter.py")
+    call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefile_dist --workpath=./onefile_build -y -w --onefile WolfStarter.py")
+    call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefolder_dist --workpath=./onefolder_build -y -w --onedir WolfStarter.py")
     
     print("Building WolfStarterUpdater")
-    call("pyinstaller --distpath=./onefile_updater_dist --workpath=./onefile_updater_build -y -w --onefile updater/WolfStarterUpdater.py")
-    call("pyinstaller --distpath=./onefolder_updater_dist --workpath=./onefolder_updater_build -y -w --onedir updater/WolfStarterUpdater.py")
+    call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefile_updater_dist --workpath=./onefile_updater_build -y -w --onefile updater/WolfStarterUpdater.py")
+    call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefolder_updater_dist --workpath=./onefolder_updater_build -y -w --onedir updater/WolfStarterUpdater.py")
     
     print("Moving executables")
     move("onefile_dist/WolfStarter.exe","%s/WolfStarter.exe" % releasedir)
@@ -49,3 +50,9 @@ if __name__ == "__main__":
     rmtree("onefile_updater_build")
     rmtree("onefolder_updater_build")
     print("Done")
+def temp():
+    print("Creating temp wolfstarter")
+    call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefile_updater_dist --workpath=./onefile_updater_build -y -w --onefile updater/WolfStarterUpdater.py")
+if __name__ == "__main__":
+    main()
+    #temp()

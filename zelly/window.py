@@ -10,6 +10,7 @@ import tkinter.messagebox
 import tkinter.simpledialog
 
 from zelly.serverdata import ServerData
+
 BLACK      = "#000000"
 DARK_GREY  = "#282828"
 GREY       = "#484848"
@@ -85,10 +86,14 @@ class NavBar(Frame):
         self.config(
                    background=Config['NAVBAR_BACKGROUND'] , cursor="hand1"
                    )
+        # Open 1
+        # Save 2
+        # Minimize 9
+        # Quit 10
         self.button_open     = MenuButton(self , 0 , text="Open..."    , command=parent.openfile)
         self.button_saveas   = MenuButton(self , 1 , text="Save..."  , command=parent.saveasfile)
-        self.button_minimize = MenuButton(self , 6 , text="Minimize"  , command=self.minimize)
-        self.button_quit     = MenuButton(self , 7 , text="Quit"       , command=parent.quit)
+        self.button_minimize = MenuButton(self , 9 , text="Minimize"  , command=self.minimize)
+        self.button_quit     = MenuButton(self , 10 , text="Quit"       , command=parent.quit)
         
         self.button_open.show()
         self.button_saveas.show()
@@ -321,10 +326,10 @@ class ServerFrame(Frame):
         self.text_scroll.grid(row=0, column=1, sticky="ns")
         # End Server Status Frame #
         
-        self.button_addserver = MenuButton(self.parent.navbar , 3 , text="Add"        , command=self.addserver)
+        self.button_addserver    = MenuButton(self.parent.navbar , 3 , text="Add"        , command=self.addserver)
         self.button_removeserver = MenuButton(self.parent.navbar , 4 , text="Remove"     , command=self.removeserver)
-        # self.button_rcon         = MenuButton( self.parent.navbar , 5 , text="Rcon"       , command=parent.rcon)
-        self.button_joinserver = MenuButton(self.parent.navbar , 6 , text="Join"       , command=self.joinserver)
+        #self.button_rcon         = MenuButton( self.parent.navbar , 5 , text="Rcon"       , command=parent.rcon)
+        self.button_joinserver   = MenuButton(self.parent.navbar , 6 , text="Join"       , command=self.joinserver)
         self.button_addserver.show()
         
         # Bring it all together
@@ -476,7 +481,7 @@ class ServerFrame(Frame):
         # End command line generate #
         logfile(command_line)
         return command_line
-    def joinserver(self,e):
+    def joinserver(self,e=None):
         command_line = self.getcommandline()
         if not command_line: return
         if not self.getselection(): return
@@ -571,6 +576,9 @@ class ServerFrame(Frame):
         selectid = self.getselection()
         if not selectid: return
         self.servers.select_set(selectid)
+        self.servermap.select_set(selectid)
+        self.serverplayers.select_set(selectid)
+        self.serverping.select_set(selectid)
         Server = self.parent.serverdata.Servers[selectid[0]]
         if not Server:
             logfile("Error updating server %d" % selectid[0])
@@ -672,7 +680,7 @@ class Window(Frame):
         self.parent.title("WolfStarter by Zelly")
         self.parent.bind("<FocusIn>"         , self.OnFocus)
         self.parent.bind("<FocusOut>"        , self.OnLostFocus)
-        
+        self.parent.iconbitmap('WolfStarterLogo.ico')
         
         self.serverdata   = ServerData()
         self.serverdata.load_serverfile(Config['servers'])
