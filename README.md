@@ -14,7 +14,8 @@ Wolfenstein: Enemy Territory launcher.
 * Fixed selecting server columns
 * Fixed the scrolling moving in reverse for the serverlist
 * Lowered the socket timeout to 500ms from 2000ms to speed up things for offline servers
-* Changed default color pattern
+* Changed default color pattern 
+  
 ### 1.1.0
 * Added a sort of error log wrapper. Saves to wolfstarter.log. Look in there if there are unknown issues.
 * Added more color options
