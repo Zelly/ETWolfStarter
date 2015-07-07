@@ -1,5 +1,5 @@
 from subprocess import call
-from shutil import move,rmtree
+from shutil import move,rmtree,copyfile
 from os import makedirs,walk,getcwd,chdir
 from os.path import isdir,exists,join,abspath
 from zipfile import ZipFile,ZIP_DEFLATED
@@ -36,6 +36,14 @@ def main():
     
     print("Moving updater to wolfstarter")
     move("onefolder_updater_dist/WolfStarterUpdater","onefolder_dist/WolfStarter/updater")
+    
+    print("Copying icon")
+    copyfile("WolfStarterLogo.ico","onefolder_dist/WolfStarter/WolfStarterLogo.ico")
+    
+    print("Copying extra files")
+    copyfile("README.md","onefolder_dist/WolfStarter/README.md")
+    copyfile("version.txt","onefolder_dist/WolfStarter/version.txt")
+    copyfile("updater/version.txt","onefolder_dist/WolfStarter/updater/version.txt")
     
     print("Zipping directory")
     zipdir("onefolder_dist/WolfStarter","%s/ETWolfStarter-v%s.zip" % ( releasedir , version ) )

@@ -7,7 +7,7 @@ from zipfile import is_zipfile,ZipFile
 from shutil import copyfileobj
 from sys import argv
 
-WOLFSTARTER_VERSION_U = "v1.2.0"
+WOLFSTARTER_VERSION_U = "v1.2.1"
 with open('version.txt','wb') as versionfile: versionfile.write(WOLFSTARTER_VERSION_U.encode())
 chdir("/".join( getcwd().replace('\\','/').split('/')[0:-1] ) )
 print(getcwd())

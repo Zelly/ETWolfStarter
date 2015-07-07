@@ -94,14 +94,29 @@ class NavBar(Frame):
         self.button_saveas   = MenuButton(self , 1 , text="Save..."  , command=parent.saveasfile)
         self.button_minimize = MenuButton(self , 9 , text="Minimize"  , command=self.minimize)
         self.button_quit     = MenuButton(self , 10 , text="Quit"       , command=parent.quit)
-        
+        try:
+            with open('version.txt','rb') as versionfile: version=versionfile.read().decode()
+        except OSError:
+            print("Couldn't get version")
+        if not version: version = "vX.X.X"
+        self.versionlabel    = Label(self,
+                                     background=Config['BUTTON_BACKGROUND'],
+                                     foreground=Config['BUTTON_FOREGROUND'],
+                                     relief="flat",
+                                     borderwidth=0,
+                                     width=5,
+                                     height=2,
+                                     padx=12,
+                                     text=version
+                                     )
+        self.versionlabel.grid(column=11,row=0,sticky=E)
         self.button_open.show()
         self.button_saveas.show()
         self.button_minimize.show()
         self.button_quit.show()
         
         self.grid(column=0, row=0, sticky=N + W + E + S)
-        # self.columnconfigure(10,weight=1)
+        self.columnconfigure(11,weight=1)
     def minimize(self):
         # I guess tkinter does not have the ability to go to system tray
         self.parent.parent.overrideredirect(False)
