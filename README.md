@@ -26,7 +26,7 @@ Also when selecting a server it will tell you all the arguments it is using and 
 * Updated the arrangement of the entry fields to make more sense
 * Updated scrolling in serverlist to synchronize all categories
 
-![fbe074dd4e26b59ad8e9412d77761b6b](https://cloud.githubusercontent.com/assets/705940/8338982/f9057732-1a79-11e5-858d-aef47f1fe0a0.png)
+![e520f9ebe590c73cf185b3c44d966954](http://i.gyazo.com/e520f9ebe590c73cf185b3c44d966954.png)
 
 ## Choosing a package to download
 ** You only need one of the following: **
