@@ -122,6 +122,8 @@ class NavBar(Frame):
         self.columnconfigure(11,weight=1)
     def minimize(self):
         # I guess tkinter does not have the ability to go to system tray
+        self.parent.focus_ignore = True
+        self.parent.minimized = True
         self.parent.parent.overrideredirect(False)
         self.parent.parent.iconify()
 class BrowseButton(Button):
@@ -674,6 +676,7 @@ class ServerFrame(Frame):
 class Window(Frame):
     def __init__(self, *args, **kwargs):
         self.focus_ignore = False
+        self.minimized    = False
         self.parent       = Tk()
         self.serverdata   = ServerData()
         self.serversframe = None
@@ -699,6 +702,7 @@ class Window(Frame):
         self.parent.title("WolfStarter by Zelly")
         self.parent.bind("<FocusIn>"         , self.OnFocus)
         self.parent.bind("<FocusOut>"        , self.OnLostFocus)
+        self.parent.bind("<Configure>"       , self.OnConfigure)
         self.parent.iconbitmap('WolfStarterLogo.ico')
         
         self.serverdata   = ServerData()
@@ -787,13 +791,22 @@ class Window(Frame):
         y = self.parent.winfo_y() + deltay
         self.parent.geometry("+%s+%s" % (x, y))
     def OnFocus(self, event):
-        if self.focus_ignore: return
+        if self.minimized or self.focus_ignore: return
         w=self.parent.focus_get()
         if w:
             self.parent.overrideredirect(True)
             w.focus_force()
     def OnLostFocus(self, event):
-        if self.focus_ignore: return
+        if self.minimized or self.focus_ignore: return
         if not self.parent.focus_get():
             self.parent.overrideredirect(False)
         
+    def OnConfigure(self,event):
+        if self.minimized and not self.parent.focus_get(): # If minimized, and window does not have focus and there is a new event.
+            # Is most likely that the event is a maximize event, however the window isn't maximized until after this event.
+            def task():
+                if self.minimized and self.parent.focus_get():
+                    self.minimized = False
+                    self.parent.overrideredirect(True)
+            self.parent.after(50,task) # Do task after 50 ms (Basically after the window is maximized)
+            
