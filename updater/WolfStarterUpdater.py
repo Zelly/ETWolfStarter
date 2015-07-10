@@ -2,7 +2,7 @@ from os import getcwd,chdir,remove
 from os.path import isfile
 from urllib.request import urlopen,URLError,HTTPError
 from socket import timeout
-from subprocess import call
+from subprocess import Popen
 from zipfile import is_zipfile,ZipFile
 from shutil import copyfileobj
 from sys import argv
@@ -97,4 +97,4 @@ if __name__ == "__main__":
         print("Running from script, cannot validate executables")
     else:
         check_update()
-        if isfile('WolfStarter.exe'): call("WolfStarter.exe")
+        if isfile('WolfStarter.exe'): Popen("WolfStarter.exe",shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)

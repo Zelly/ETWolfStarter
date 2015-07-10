@@ -8,12 +8,13 @@ from os.path import isfile,isdir,abspath
 from os import remove
 from shutil import copyfileobj
 from zipfile import is_zipfile,ZipFile
-from subprocess import call
+from subprocess import Popen
 from sys import exit,argv
 
 WOLFSTARTER_VERSION = "v1.2.2"
 
 DELETEZIPLIST=[]
+
 def markfordeletion(filename):
     DELETEZIPLIST.append(filename)
 
@@ -107,7 +108,7 @@ def update_updater(version):
 
 def update(version):
     logfile("Calling updater")
-    call('updater/WolfStarterUpdater.exe')
+    Popen('updater/WolfStarterUpdater.exe',shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)
     logfile("Closing program to update")
 def check_update():
     try:

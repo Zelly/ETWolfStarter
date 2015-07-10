@@ -2,7 +2,7 @@ import json
 from os import getcwd
 from os.path import isfile, join, isdir
 from re import compile
-from subprocess import call
+from subprocess import Popen
 from tkinter import *  # @UnusedWildImport
 import tkinter.filedialog
 import tkinter.font
@@ -11,6 +11,9 @@ import tkinter.simpledialog
 
 from zelly.serverdata import ServerData
 
+def openprocess(command):
+    Popen(command,shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)
+    
 BLACK      = "#000000"
 DARK_GREY  = "#282828"
 GREY       = "#484848"
@@ -505,7 +508,8 @@ class ServerFrame(Frame):
             logfile("Error updating server %d" % self.getselection()[0])
             return
         logfile("Joining server %s" % Server['title'])
-        call(command_line)
+        openprocess(command_line)
+        
     def getcolortags(self, textstr):
         pass
     def getlinenum(self):
