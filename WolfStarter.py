@@ -11,7 +11,7 @@ from zipfile import is_zipfile,ZipFile
 from subprocess import call
 from sys import exit,argv
 
-WOLFSTARTER_VERSION = "v1.2.1"
+WOLFSTARTER_VERSION = "v1.2.2"
 
 DELETEZIPLIST=[]
 def markfordeletion(filename):
