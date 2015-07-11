@@ -14,6 +14,7 @@ from zelly.serverdata import ServerData
 def openprocess(command):
     Popen(command,shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)
     
+FONT       = tkinter.font.Font(family="Courier New", size=10)
 BLACK      = "#000000"
 DARK_GREY  = "#282828"
 GREY       = "#484848"
@@ -48,16 +49,23 @@ PLAYER_NAME_LENGTH       = 32
 PLAYER_PING_LENGTH       = 8
 PLAYER_SCORE_LENGTH      = 12
 SERVERSTATUS_TEXT_LENGTH = 54
-clean_pattern = compile("(\^[\d\.\w=\-]?)")
 
+clean_pattern = compile("(\^.)") #(\^[\d\.\w=\-]?)
 def cleanstr(s):
+    """Cleans color codes from an W:ET String"""
     return clean_pattern.sub("", s)
-def logfile(msg): # Probably bad way of doing this oh well
+
+def logfile(msg):
+    """Prints message and logs to log file"""
     print(msg)
-    with open("wolfstarter.log","a") as errorlog:
-        errorlog.write('%s\n' % msg)
+    with open("wolfstarter.log","a") as log_file:
+        log_file.write('%s\n' % msg)
 
 class MenuButton(Button):
+    """Flat styled button to be placed on navbar
+    parent -- Should be Navbar
+    column -- Placement from left to right
+    row    -- Should probably always be 0 but added just incase"""
     def __init__(self, parent=None, column=0, row=0, cnf={}, **kw):
         Button.__init__(self, parent, cnf, **kw)
         self.parent = parent
@@ -78,17 +86,33 @@ class MenuButton(Button):
         self.column = column
         self.hide()
     def show(self):
+        """Adds it self to the navbar grid"""
         self.grid(row=self.row, column=self.column, sticky=W)
     def hide(self):
+        """Hides itself from the grid"""
         self.grid_forget()
+class BrowseButton(Button):
+    """File browse button share similar style to MenuButtons""" 
+    def __init__(self, master=None, dir_var=None, cnf={}, **kw):
+        Button.__init__(self, master, cnf, **kw)
+        self.parent = master
+        self.config(background=Config['BROWSE_BUTTON_BACKGROUND'],
+                    foreground=Config['BROWSE_BUTTON_FOREGROUND'],
+                    activebackground=Config['BROWSE_A_BUTTON_BACKGROUND'],
+                    activeforeground=Config['BROWSE_A_BUTTON_FOREGROUND'],
+                    borderwidth=0,
+                    # width           = 5,
+                    # height          = 2,
+                    relief="flat",
+                    padx=5,
+                    cursor="hand2")
 
 class NavBar(Frame):
+    """Flat styled menu bar should contain only MenuButtons"""
     def __init__(self, parent, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
-        self.config(
-                   background=Config['NAVBAR_BACKGROUND'] , cursor="hand1"
-                   )
+        self.config(background=Config['NAVBAR_BACKGROUND'] , cursor="hand1")
         # Open 1
         # Save 2
         # Minimize 9
@@ -121,70 +145,56 @@ class NavBar(Frame):
         self.grid(column=0, row=0, sticky=N + W + E + S)
         self.columnconfigure(11,weight=1)
     def minimize(self):
-        # I guess tkinter does not have the ability to go to system tray
-        self.parent.focus_ignore = True
         self.parent.minimized = True
         self.parent.parent.overrideredirect(False)
         self.parent.parent.iconify()
-class BrowseButton(Button):
-    def __init__(self, master=None, dir_var=None, cnf={}, **kw):
-        Button.__init__(self, master, cnf, **kw)
-        self.parent = master
-        self.config(background=Config['BROWSE_BUTTON_BACKGROUND'],
-                    foreground=Config['BROWSE_BUTTON_FOREGROUND'],
-                    activebackground=Config['BROWSE_A_BUTTON_BACKGROUND'],
-                    activeforeground=Config['BROWSE_A_BUTTON_FOREGROUND'],
-                    borderwidth=0,
-                    # width           = 5,
-                    # height          = 2,
-                    relief="flat",
-                    padx=5,
-                    cursor="hand2")
-class ServerFrame(Frame):
+
+class HeaderFrame(Frame):
+    """Frame containing global parameters to be applied to all servers by default"""
     def __init__(self, parent, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
-        self.parent = parent
+        self.ServerFrame = parent
         
-        self.config(background=Config['WINDOW_BACKGROUND'], padx=5, pady=5)
-        
-        font = tkinter.font.Font(family="Courier New", size=10)
-        self.currentline = 1
-        self.header_frame = Frame(self, background=Config['HEADER_BACKGROUND'])
+        self.config(background=Config['HEADER_BACKGROUND'])
         
         # Global ETPath
-        self.etpath_var = StringVar()
-        self.etpath_label = Label(self.header_frame, text="ET: ", font=font, background=Config['HEADER_BACKGROUND'])
-        self.etpath_entry = Entry(self.header_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.etpath_var)
-        self.etpath_browse = BrowseButton(self.header_frame, text="Browse...", command=lambda :self.getfilepath(self.etpath_var, self.updateconfig))
+        self.etpath_var    = StringVar()
+        self.etpath_label  = Label(self, text="ET: ", font=FONT, background=Config['HEADER_BACKGROUND'])
+        self.etpath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.etpath_var)
+        self.etpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getfilepath(self.etpath_var, self.updateconfig))
+        
         self.etpath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
-        self.etpath_label.grid(row=0, column=0, sticky=N + W)
-        self.etpath_entry.grid(row=0, column=1, sticky=N + W + E)
-        self.etpath_browse.grid(row=0, column=2, sticky=N + E)
+        self.etpath_label.grid(  row=0 , column=0 , sticky=N + W)
+        self.etpath_entry.grid(  row=0 , column=1 , sticky=N + W + E)
+        self.etpath_browse.grid( row=0 , column=2 , sticky=N + E)
         
         # Global fs_basepath
-        self.fs_basepath_var = StringVar()
-        self.fs_basepath_label = Label(self.header_frame, text="fs_basepath: ", font=font, background=Config['HEADER_BACKGROUND'])
-        self.fs_basepath_entry = Entry(self.header_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_basepath_var)
-        self.fs_basepath_browse = BrowseButton(self.header_frame, text="Browse...", command=lambda :self.getpath(self.fs_basepath_var, self.updateconfig))
-        self.fs_basepath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
-        self.fs_basepath_label.grid(row=1, column=0, sticky=N + W)
-        self.fs_basepath_entry.grid(row=1, column=1, sticky=N + W + E)
-        self.fs_basepath_browse.grid(row=1, column=2, sticky=N + E)
+        self.fs_basepath_var    = StringVar()
+        self.fs_basepath_label  = Label(self, text="fs_basepath: ", font=FONT, background=Config['HEADER_BACKGROUND'])
+        self.fs_basepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_basepath_var)
+        self.fs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getpath(self.fs_basepath_var, self.updateconfig))
+        
+        self.fs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.updateconfig)
+        self.fs_basepath_label.grid(  row=1 , column=0 , sticky=N + W)
+        self.fs_basepath_entry.grid(  row=1 , column=1 , sticky=N + W + E)
+        self.fs_basepath_browse.grid( row=1 , column=2 , sticky=N + E)
         
         # Global fs_homepath
-        self.fs_homepath_var = StringVar()
-        self.fs_homepath_label = Label(self.header_frame, text="fs_homepath: ", font=font, background=Config['HEADER_BACKGROUND'])
-        self.fs_homepath_entry = Entry(self.header_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_homepath_var)
-        self.fs_homepath_browse = BrowseButton(self.header_frame, text="Browse...", command=lambda :self.getpath(self.fs_homepath_var, self.updateconfig))
+        self.fs_homepath_var    = StringVar()
+        self.fs_homepath_label  = Label(self, text="fs_homepath: ", font=FONT, background=Config['HEADER_BACKGROUND'])
+        self.fs_homepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_homepath_var)
+        self.fs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getpath(self.fs_homepath_var, self.updateconfig))
+        
         self.fs_homepath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
-        self.fs_homepath_label.grid(row=2, column=0, sticky=N + W)
-        self.fs_homepath_entry.grid(row=2, column=1, sticky=N + W + E)
-        self.fs_homepath_browse.grid(row=2, column=2, sticky=N + E)
+        self.fs_homepath_label.grid(  row=2 , column=0 , sticky=N + W)
+        self.fs_homepath_entry.grid(  row=2 , column=1 , sticky=N + W + E)
+        self.fs_homepath_browse.grid( row=2 , column=2 , sticky=N + E)
         
         # Global Parameters
         self.parameters_var = StringVar()
-        self.parameters_label = Label(self.header_frame, text="Parameters: ", font=font, background=Config['HEADER_BACKGROUND'])
-        self.parameters_entry = Entry(self.header_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.parameters_var)
+        self.parameters_label = Label(self, text="Parameters: ", font=FONT, background=Config['HEADER_BACKGROUND'])
+        self.parameters_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.parameters_var)
+        
         self.parameters_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
         self.parameters_label.grid(row=3, column=0, sticky=N + W)
         self.parameters_entry.grid(row=3, column=1, sticky=N + W + E)
@@ -193,20 +203,26 @@ class ServerFrame(Frame):
         if self.parent.serverdata.fs_homepath: self.fs_homepath_var.set(self.parent.serverdata.fs_homepath)
         if self.parent.serverdata.parameters: self.parameters_var.set(self.parent.serverdata.parameters)
         if self.parent.serverdata.ETPath: self.etpath_var.set(self.parent.serverdata.ETPath)
+
+class ServerListFrame(Frame):
+    """Contains the server list"""
+    def __init__(self, parent, *args, **kwargs):
+        Frame.__init__(self, parent, *args, **kwargs)
+        self.ServerFrame = parent
         
-        # Server List Frame
-        self.serverlist_frame = Frame(self, background=Config['SERVERLIST_BACKGROUND'])
+        self.config(background=Config['SERVERLIST_BACKGROUND'], padx=5, pady=5)
         
         # Server List Titles
-        self.servers_label = Label(self.serverlist_frame, text="Title", font=font, background=Config['SERVERLIST_BACKGROUND'])
-        self.servers = Listbox(self.serverlist_frame, width=25, relief="flat",
-                               borderwidth=0,
-                               font=font,
-                               selectbackground=Config['LIST_SELECT_BACK'],
-                               selectborderwidth=0,
-                               selectforeground=Config['LIST_SELECT_FORE'],
-                               exportselection=0,
-                               activestyle="none")
+        self.servers_label = Label(self, text="Title", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
+        self.servers       = Listbox(self, width=25, relief="flat",
+                                     borderwidth=0,
+                                     font=FONT,
+                                     selectbackground=Config['LIST_SELECT_BACK'],
+                                     selectborderwidth=0,
+                                     selectforeground=Config['LIST_SELECT_FORE'],
+                                     exportselection=0,
+                                     activestyle="none")
+        
         self.servers.bind("<<ListboxSelect>>", self.selectserver)
         self.servers.bind("<Double-Button-1>", self.joinserver)
         self.servers.bind("<MouseWheel>", self.OnMouseWheel)
@@ -214,15 +230,16 @@ class ServerFrame(Frame):
         self.servers.grid(row=1, column=0, sticky=N + W + E)
         
         # Server Map
-        self.servermap_label = Label(self.serverlist_frame, text="Map", font=font, background=Config['SERVERLIST_BACKGROUND'])
-        self.servermap = Listbox(self.serverlist_frame, width=10, relief="flat",
-                               borderwidth=0,
-                               font=font,
-                               selectbackground=Config['LIST_SELECT_BACK'],
-                               selectborderwidth=0,
-                               selectforeground=Config['LIST_SELECT_FORE'],
-                               exportselection=0,
-                               activestyle="none")
+        self.servermap_label = Label(self, text="Map", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
+        self.servermap       = Listbox(self, width=10, relief="flat",
+                                       borderwidth=0,
+                                       font=FONT,
+                                       selectbackground=Config['LIST_SELECT_BACK'],
+                                       selectborderwidth=0,
+                                       selectforeground=Config['LIST_SELECT_FORE'],
+                                       exportselection=0,
+                                       activestyle="none")
+        
         self.servermap.bind("<<ListboxSelect>>", self.selectserver)
         self.servermap.bind("<Double-Button-1>", self.joinserver)
         self.servermap.bind("<MouseWheel>", self.OnMouseWheel)
@@ -230,15 +247,16 @@ class ServerFrame(Frame):
         self.servermap.grid(row=1, column=1, sticky=N + W + E)
         
         # Server Players
-        self.serverplayers_label = Label(self.serverlist_frame, text="Players", font=font, background=Config['SERVERLIST_BACKGROUND'])
-        self.serverplayers = Listbox(self.serverlist_frame, width=10, relief="flat",
-                               borderwidth=0,
-                               font=font,
-                               selectbackground=Config['LIST_SELECT_BACK'],
-                               selectborderwidth=0,
-                               selectforeground=Config['LIST_SELECT_FORE'],
-                               exportselection=0,
-                               activestyle="none")
+        self.serverplayers_label = Label(self, text="Players", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
+        self.serverplayers       = Listbox(self, width=10, relief="flat",
+                                           borderwidth=0,
+                                           font=FONT,
+                                           selectbackground=Config['LIST_SELECT_BACK'],
+                                           selectborderwidth=0,
+                                           selectforeground=Config['LIST_SELECT_FORE'],
+                                           exportselection=0,
+                                           activestyle="none")
+        
         self.serverplayers.bind("<<ListboxSelect>>", self.selectserver)
         self.serverplayers.bind("<Double-Button-1>", self.joinserver)
         self.serverplayers.bind("<MouseWheel>", self.OnMouseWheel)
@@ -246,91 +264,109 @@ class ServerFrame(Frame):
         self.serverplayers.grid(row=1, column=2, sticky=N + W + E)
         
         # Server Ping
-        self.serverping_label = Label(self.serverlist_frame, text="Ping", font=font, background=Config['SERVERLIST_BACKGROUND'])
-        self.serverping = Listbox(self.serverlist_frame, width=10, relief="flat",
-                               borderwidth=0,
-                               font=font,
-                               selectbackground=Config['LIST_SELECT_BACK'],
-                               selectborderwidth=0,
-                               selectforeground=Config['LIST_SELECT_FORE'],
-                               exportselection=0,
-                               activestyle="none")
+        self.serverping_label = Label(self, text="Ping", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
+        self.serverping       = Listbox(self, width=10, relief="flat",
+                                        borderwidth=0,
+                                        font=FONT,
+                                        selectbackground=Config['LIST_SELECT_BACK'],
+                                        selectborderwidth=0,
+                                        selectforeground=Config['LIST_SELECT_FORE'],
+                                        exportselection=0,
+                                        activestyle="none")
+        
         self.serverping.bind("<<ListboxSelect>>", self.selectserver)
         self.serverping.bind("<Double-Button-1>", self.joinserver)
         self.serverping.bind("<MouseWheel>", self.OnMouseWheel)
         self.serverping_label.grid(row=0, column=3, sticky=N + W + E)
         self.serverping.grid(row=1, column=3, sticky=N + W + E)
+
+class ServerDataFrame(Frame):
+    """Frame contains all server related frames"""
+    def __init__(self, parent, *args, **kwargs):
+        Frame.__init__(self, parent, *args, **kwargs)
+        self.ServerFrame = parent
         
-        # Server Data Frame
-        self.serverdata_frame = Frame(self, background=Config['SERVERDATA_BACKGROUND'])
+        self.config(background=Config['SERVERDATA_BACKGROUND'])
         
         # Server title
-        self.servertitle_var = StringVar()
-        self.servertitle_label = Label(self.serverdata_frame, text="Title: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
-        self.servertitle_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.servertitle_var)
-        self.servertitle_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
-        self.servertitle_label.grid(row=0, column=0, sticky=N + W)
-        self.servertitle_entry.grid(row=0, column=1, sticky=N + W + E)
+        self.servertitle_var   = StringVar()
+        self.servertitle_label = Label(self, text="Title: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.servertitle_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.servertitle_var)
+        
+        self.servertitle_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
+        self.servertitle_label.grid( row=0, column=0, sticky=N + W)
+        self.servertitle_entry.grid( row=0, column=1, sticky=N + W + E)
         
         # Server Password
-        self.serverpassword_var = StringVar()
-        self.serverpassword_label = Label(self.serverdata_frame, text="Password: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
-        self.serverpassword_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverpassword_var)
-        self.serverpassword_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
+        self.serverpassword_var   = StringVar()
+        self.serverpassword_label = Label(self, text="Password: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverpassword_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverpassword_var)
+        
+        self.serverpassword_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         
         # Server address
-        self.serveraddress_var = StringVar()
-        self.serveraddress_label = Label(self.serverdata_frame, text="Address: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
-        self.serveraddress_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveraddress_var)
-        self.serveraddress_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
-        self.serveraddress_label.grid(row=2, column=0, sticky=N + W)
-        self.serveraddress_entry.grid(row=2, column=1, sticky=N + W + E)
+        self.serveraddress_var   = StringVar()
+        self.serveraddress_label = Label(self, text="Address: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serveraddress_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveraddress_var)
+        
+        self.serveraddress_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
+        self.serveraddress_label.grid( row=2, column=0, sticky=N + W)
+        self.serveraddress_entry.grid( row=2, column=1, sticky=N + W + E)
         
         # Server ETPath
-        self.serveretpath_var = StringVar()
-        self.serveretpath_label = Label(self.serverdata_frame, text="ET: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
-        self.serveretpath_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveretpath_var)
-        self.serveretpath_browse = BrowseButton(self.serverdata_frame, text="Browse...", command=lambda :self.getfilepath(self.serveretpath_var, self.updateserver))
-        self.serveretpath_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
-        self.serveretpath_label.grid(row=3, column=0, sticky=N + W)
-        self.serveretpath_entry.grid(row=3, column=1, sticky=N + W + E)
-        self.serveretpath_browse.grid(row=3, column=2, sticky=N + E)
+        self.serveretpath_var    = StringVar()
+        self.serveretpath_label  = Label(self, text="ET: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serveretpath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveretpath_var)
+        self.serveretpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getfilepath(self.serveretpath_var, self.updateserver))
+        
+        self.serveretpath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
+        self.serveretpath_label.grid(  row=3, column=0, sticky=N + W)
+        self.serveretpath_entry.grid(  row=3, column=1, sticky=N + W + E)
+        self.serveretpath_browse.grid( row=3, column=2, sticky=N + E)
         
         # Server fs_basepath
-        self.serverfs_basepath_var = StringVar()
-        self.serverfs_basepath_label = Label(self.serverdata_frame, text="fs_basepath: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
-        self.serverfs_basepath_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_basepath_var)
-        self.serverfs_basepath_browse = BrowseButton(self.serverdata_frame, text="Browse...", command=lambda :self.getpath(self.serverfs_basepath_var, self.updateserver))
-        self.serverfs_basepath_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
-        self.serverfs_basepath_label.grid(row=4, column=0, sticky=N + W)
-        self.serverfs_basepath_entry.grid(row=4, column=1, sticky=N + W + E)
-        self.serverfs_basepath_browse.grid(row=4, column=2, sticky=N + E)
+        self.serverfs_basepath_var    = StringVar()
+        self.serverfs_basepath_label  = Label(self, text="fs_basepath: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverfs_basepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_basepath_var)
+        self.serverfs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getpath(self.serverfs_basepath_var, self.updateserver))
+        
+        self.serverfs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
+        self.serverfs_basepath_label.grid(  row=4, column=0, sticky=N + W)
+        self.serverfs_basepath_entry.grid(  row=4, column=1, sticky=N + W + E)
+        self.serverfs_basepath_browse.grid( row=4, column=2, sticky=N + E)
         
         # Server fs_homepath
-        self.serverfs_homepath_var = StringVar()
-        self.serverfs_homepath_label = Label(self.serverdata_frame, text="fs_homepath: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
-        self.serverfs_homepath_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_homepath_var)
-        self.serverfs_homepath_browse = BrowseButton(self.serverdata_frame, text="Browse...", command=lambda :self.getpath(self.serverfs_homepath_var, self.updateserver))
-        self.serverfs_homepath_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
-        self.serverfs_homepath_label.grid(row=5, column=0, sticky=N + W)
-        self.serverfs_homepath_entry.grid(row=5, column=1, sticky=N + W + E)
-        self.serverfs_homepath_browse.grid(row=5, column=2, sticky=N + E)
+        self.serverfs_homepath_var    = StringVar()
+        self.serverfs_homepath_label  = Label(self, text="fs_homepath: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverfs_homepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_homepath_var)
+        self.serverfs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getpath(self.serverfs_homepath_var, self.updateserver))
+        
+        self.serverfs_homepath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
+        self.serverfs_homepath_label.grid(  row=5, column=0, sticky=N + W)
+        self.serverfs_homepath_entry.grid(  row=5, column=1, sticky=N + W + E)
+        self.serverfs_homepath_browse.grid( row=5, column=2, sticky=N + E)
         
         # Server extra parameters
-        self.serverparams_var = StringVar()
-        self.serverparams_label = Label(self.serverdata_frame, text="Parameters: ", font=font, background=Config['SERVERDATA_BACKGROUND'])
-        self.serverparams_entry = Entry(self.serverdata_frame, font=font, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverparams_var)
-        self.serverparams_entry.bind(sequence='<KeyRelease>', func=self.updateserver)
-        self.serverparams_label.grid(row=6, column=0, sticky=N + W)
-        self.serverparams_entry.grid(row=6, column=1, sticky=N + W + E)
+        self.serverparams_var   = StringVar()
+        self.serverparams_label = Label(self, text="Parameters: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverparams_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverparams_var)
         
-        # Server Status Frame #
-        self.serverstatus_frame = Frame(self, background=Config['SERVERSTATUS_BACKGROUND'])
+        self.serverparams_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
+        self.serverparams_label.grid( row=6, column=0, sticky=N + W)
+        self.serverparams_entry.grid( row=6, column=1, sticky=N + W + E)
+
+class ServerStatusFrame(Frame):
+    """Contains actual serverdata information such as players and cvars"""
+    def __init__(self, parent, *args, **kwargs):
+        Frame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        
+        self.config(background=Config['SERVERSTATUS_BACKGROUND'])
         
         self.text = Text(
-                         self.serverstatus_frame,
+                         self,
                          background=Config['SERVERSTATUS_BACKGROUND'],
-                         font=font,
+                         font=FONT,
                          relief="flat",
                          wrap="none",
                          width=54,
@@ -341,10 +377,23 @@ class ServerFrame(Frame):
         
         self.text.grid(sticky=W + N)
         
-        self.text_scroll = Scrollbar(self.serverstatus_frame, command=self.text.yview, background=Config['BUTTON_BACKGROUND'])
+        self.text_scroll = Scrollbar(self, command=self.text.yview, background=Config['BUTTON_BACKGROUND'])
         self.text.config(yscrollcommand=self.text_scroll.set)
         self.text_scroll.grid(row=0, column=1, sticky="ns")
-        # End Server Status Frame #
+
+class ServerFrame(Frame):
+    """Frame contains all server related frames"""
+    def __init__(self, parent, *args, **kwargs):
+        Frame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        
+        self.config(background=Config['WINDOW_BACKGROUND'], padx=5, pady=5)
+        
+        self.currentline       = 1
+        self.HeaderFrame       = HeaderFrame(self)
+        self.ServerListFrame   = ServerListFrame(self)
+        self.ServerDataFrame   = ServerDataFrame(self)
+        self.ServerStatusFrame = ServerStatusFrame(self)
         
         self.button_addserver    = MenuButton(self.parent.navbar , 3 , text="Add"        , command=self.addserver)
         self.button_removeserver = MenuButton(self.parent.navbar , 4 , text="Remove"     , command=self.removeserver)
@@ -363,7 +412,7 @@ class ServerFrame(Frame):
         
         self.notice_var = StringVar()
         self.notice_var.set("FS_Basepath and FS_Homepath are not required.\nThey will be set to the folder of you ET.exe if not specfied.")
-        self.notice_label = Label(self,font=font,background=Config['WINDOW_BACKGROUND'],textvariable=self.notice_var)
+        self.notice_label = Label(self,font=FONT,background=Config['WINDOW_BACKGROUND'],textvariable=self.notice_var)
         self.notice_label.grid(row=4, column=0, sticky=N + W,rowspan=2)
         
         
