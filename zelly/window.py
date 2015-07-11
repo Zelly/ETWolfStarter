@@ -14,7 +14,7 @@ from zelly.serverdata import ServerData
 def openprocess(command):
     Popen(command,shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)
     
-FONT       = tkinter.font.Font(family="Courier New", size=10)
+FONT       = None
 BLACK      = "#000000"
 DARK_GREY  = "#282828"
 GREY       = "#484848"
@@ -49,6 +49,8 @@ PLAYER_NAME_LENGTH       = 32
 PLAYER_PING_LENGTH       = 8
 PLAYER_SCORE_LENGTH      = 12
 SERVERSTATUS_TEXT_LENGTH = 54
+HALFLEN = int((SERVERSTATUS_TEXT_LENGTH - 3) / 2)
+HEADERLENGTH = SERVERSTATUS_TEXT_LENGTH - 14
 
 clean_pattern = compile("(\^.)") #(\^[\d\.\w=\-]?)
 def cleanstr(s):
@@ -161,7 +163,7 @@ class HeaderFrame(Frame):
         self.etpath_var    = StringVar()
         self.etpath_label  = Label(self, text="ET: ", font=FONT, background=Config['HEADER_BACKGROUND'])
         self.etpath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.etpath_var)
-        self.etpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getfilepath(self.etpath_var, self.updateconfig))
+        self.etpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getfilepath(self.etpath_var, self.updateconfig))
         
         self.etpath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
         self.etpath_label.grid(  row=0 , column=0 , sticky=N + W)
@@ -172,7 +174,7 @@ class HeaderFrame(Frame):
         self.fs_basepath_var    = StringVar()
         self.fs_basepath_label  = Label(self, text="fs_basepath: ", font=FONT, background=Config['HEADER_BACKGROUND'])
         self.fs_basepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_basepath_var)
-        self.fs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getpath(self.fs_basepath_var, self.updateconfig))
+        self.fs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.fs_basepath_var, self.updateconfig))
         
         self.fs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.updateconfig)
         self.fs_basepath_label.grid(  row=1 , column=0 , sticky=N + W)
@@ -183,7 +185,7 @@ class HeaderFrame(Frame):
         self.fs_homepath_var    = StringVar()
         self.fs_homepath_label  = Label(self, text="fs_homepath: ", font=FONT, background=Config['HEADER_BACKGROUND'])
         self.fs_homepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_homepath_var)
-        self.fs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getpath(self.fs_homepath_var, self.updateconfig))
+        self.fs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.fs_homepath_var, self.updateconfig))
         
         self.fs_homepath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
         self.fs_homepath_label.grid(  row=2 , column=0 , sticky=N + W)
@@ -199,10 +201,21 @@ class HeaderFrame(Frame):
         self.parameters_label.grid(row=3, column=0, sticky=N + W)
         self.parameters_entry.grid(row=3, column=1, sticky=N + W + E)
         
-        if self.parent.serverdata.fs_basepath: self.fs_basepath_var.set(self.parent.serverdata.fs_basepath)
-        if self.parent.serverdata.fs_homepath: self.fs_homepath_var.set(self.parent.serverdata.fs_homepath)
-        if self.parent.serverdata.parameters: self.parameters_var.set(self.parent.serverdata.parameters)
-        if self.parent.serverdata.ETPath: self.etpath_var.set(self.parent.serverdata.ETPath)
+        if self.ServerFrame.parent.serverdata.fs_basepath: self.fs_basepath_var.set(self.ServerFrame.parent.serverdata.fs_basepath)
+        if self.ServerFrame.parent.serverdata.fs_homepath: self.fs_homepath_var.set(self.ServerFrame.parent.serverdata.fs_homepath)
+        if self.ServerFrame.parent.serverdata.parameters: self.parameters_var.set(self.ServerFrame.parent.serverdata.parameters)
+        if self.ServerFrame.parent.serverdata.ETPath: self.etpath_var.set(self.ServerFrame.parent.serverdata.ETPath)
+        
+        self.grid_columnconfigure(1, minsize=400)
+    def show(self):
+        self.grid(row=0, column=0, sticky=N + W + E)
+    def hide(self):
+        self.grid_forget()
+    def updateconfig(self, e):
+        if self.fs_basepath_var.get() and isdir(self.fs_basepath_var.get()): self.ServerFrame.parent.serverdata.fs_basepath = self.fs_basepath_var.get()
+        if self.fs_homepath_var.get() and isdir(self.fs_homepath_var.get()): self.ServerFrame.parent.serverdata.fs_homepath = self.fs_homepath_var.get()
+        if self.etpath_var.get() and isfile(self.etpath_var.get()): self.ServerFrame.parent.serverdata.ETPath = self.etpath_var.get()
+        if self.parameters_var.get(): self.ServerFrame.parent.serverdata.parameters = self.parameters_var.get()
 
 class ServerListFrame(Frame):
     """Contains the server list"""
@@ -279,6 +292,74 @@ class ServerListFrame(Frame):
         self.serverping.bind("<MouseWheel>", self.OnMouseWheel)
         self.serverping_label.grid(row=0, column=3, sticky=N + W + E)
         self.serverping.grid(row=1, column=3, sticky=N + W + E)
+        
+        self.grid_columnconfigure(0, weight=1)
+    def show(self):
+        self.grid(row=1, column=0, sticky=N + W)
+    def hide(self):
+        self.grid_forget()
+    def clear(self):
+        self.servers.selection_clear(0, END)
+        self.servers.delete(0, END)
+        self.servermap.selection_clear(0, END)
+        self.servermap.delete(0, END)
+        self.serverplayers.selection_clear(0, END)
+        self.serverplayers.delete(0, END)
+        self.serverping.selection_clear(0, END)
+        self.serverping.delete(0, END)
+    def add(self,Server=None):
+        if not Server: return
+        self.servers.insert(END       , Server['title'])
+        self.servermap.insert(END     , Server['map'])
+        self.serverplayers.insert(END , Server['players'])
+        self.serverping.insert(END    , Server['ping'])
+    def select(self,selectid=None):
+        if not selectid: return
+        self.servers.select_set(selectid)
+        self.servermap.select_set(selectid)
+        self.serverplayers.select_set(selectid)
+        self.serverping.select_set(selectid)
+    def get(self):
+        if self.servers.curselection(): return self.servers.curselection()[0]
+        if self.servermap.curselection(): return self.servermap.curselection()[0]
+        if self.serverping.curselection(): return self.serverping.curselection()[0]
+        if self.serverplayers.curselection(): return self.serverplayers.curselection()[0]
+        return None
+    def getfull(self):
+        if self.servers.curselection(): return self.servers.curselection()
+        if self.servermap.curselection(): return self.servermap.curselection()
+        if self.serverping.curselection(): return self.serverping.curselection()
+        if self.serverplayers.curselection(): return self.serverplayers.curselection()
+        return None
+    def OnMouseWheel(self, event):
+        #print(event.delta)
+        delta = event.delta*-1
+        #print(delta)
+        self.servers.yview("scroll", delta,"units")
+        self.servermap.yview("scroll", delta,"units")
+        self.serverping.yview("scroll", delta,"units")
+        self.serverplayers.yview("scroll", delta,"units")
+        return "break"
+    def selectserver(self, e):
+        selectid = self.get()
+        if not selectid: return
+        
+        Server = self.ServerFrame.parent.serverdata.Servers[selectid]
+        if not Server:
+            logfile("Error updating server %d" % selectid)
+            return
+        
+        logfile("Selecting server %s" % Server['title'])
+        
+        self.select(self.getfull())
+        self.ServerFrame.ServerDataFrame.set(Server)
+        
+        self.ServerFrame.button_joinserver.show()
+        self.ServerFrame.button_removeserver.show()
+        self.ServerFrame.serverstatus()
+
+        command_line = self.ServerFrame.getcommandline(selectid)
+        if command_line: self.ServerFrame.NoticeLabel.set(command_line.replace('+','\n+'))
 
 class ServerDataFrame(Frame):
     """Frame contains all server related frames"""
@@ -317,7 +398,7 @@ class ServerDataFrame(Frame):
         self.serveretpath_var    = StringVar()
         self.serveretpath_label  = Label(self, text="ET: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serveretpath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveretpath_var)
-        self.serveretpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getfilepath(self.serveretpath_var, self.updateserver))
+        self.serveretpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getfilepath(self.serveretpath_var, self.updateserver))
         
         self.serveretpath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
         self.serveretpath_label.grid(  row=3, column=0, sticky=N + W)
@@ -328,7 +409,7 @@ class ServerDataFrame(Frame):
         self.serverfs_basepath_var    = StringVar()
         self.serverfs_basepath_label  = Label(self, text="fs_basepath: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serverfs_basepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_basepath_var)
-        self.serverfs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getpath(self.serverfs_basepath_var, self.updateserver))
+        self.serverfs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.serverfs_basepath_var, self.updateserver))
         
         self.serverfs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
         self.serverfs_basepath_label.grid(  row=4, column=0, sticky=N + W)
@@ -339,7 +420,7 @@ class ServerDataFrame(Frame):
         self.serverfs_homepath_var    = StringVar()
         self.serverfs_homepath_label  = Label(self, text="fs_homepath: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serverfs_homepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_homepath_var)
-        self.serverfs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.getpath(self.serverfs_homepath_var, self.updateserver))
+        self.serverfs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.serverfs_homepath_var, self.updateserver))
         
         self.serverfs_homepath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
         self.serverfs_homepath_label.grid(  row=5, column=0, sticky=N + W)
@@ -354,7 +435,43 @@ class ServerDataFrame(Frame):
         self.serverparams_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         self.serverparams_label.grid( row=6, column=0, sticky=N + W)
         self.serverparams_entry.grid( row=6, column=1, sticky=N + W + E)
-
+        self.grid_columnconfigure(1, minsize=400)
+    def show(self):
+        self.grid(row=2, column=0, sticky=N)
+    def hide(self):
+        self.grid_forget()
+    def showpassword(self):
+        self.serverpassword_label.grid(row=1, column=0, sticky=N + W)
+        self.serverpassword_entry.grid(row=1, column=1, sticky=N + W + E)
+    def hidepassword(self):
+        self.serverpassword_label.grid_forget()
+        self.serverpassword_entry.grid_forget()
+    def set(self,Server=None):
+        if not Server: return
+        self.servertitle_var.set(Server['title'])
+        self.serveraddress_var.set(Server['address'])
+        self.serverpassword_var.set(Server['password'])
+        self.serverparams_var.set(Server['parameters'])
+        self.serverfs_basepath_var.set(Server['fs_basepath'])
+        self.serverfs_homepath_var.set(Server['fs_homepath'])
+        self.serveretpath_var.set(Server['ETPath'])
+    def updateserver(self,Server=None):
+        if not Server: return
+        if self.servertitle_var.get(): Server['title'] = self.servertitle_var.get()
+        if self.serveraddress_var.get(): Server['address'] = self.serveraddress_var.get()
+        if self.serverpassword_var.get(): Server['password'] = self.serverpassword_var.get()
+        if self.serverparams_var.get(): Server['parameters'] = self.serverparams_var.get()
+        if self.serverfs_basepath_var.get() and isdir(self.serverfs_basepath_var.get()): Server['fs_basepath'] = self.serverfs_basepath_var.get()
+        if self.serverfs_homepath_var.get() and isdir(self.serverfs_homepath_var.get()): Server['fs_homepath'] = self.serverfs_homepath_var.get()
+        if self.serveretpath_var.get() and isfile(self.serveretpath_var.get()): Server['ETPath'] = self.serveretpath_var.get()
+    def clear(self):
+        self.servertitle_var.set('')
+        self.serveraddress_var.set('')
+        self.serverpassword_var.set('')
+        self.serverparams_var.set('')
+        self.serverfs_basepath_var.set('')
+        self.serverfs_homepath_var.set('')
+        self.serveretpath_var.set('')
 class ServerStatusFrame(Frame):
     """Contains actual serverdata information such as players and cvars"""
     def __init__(self, parent, *args, **kwargs):
@@ -362,6 +479,8 @@ class ServerStatusFrame(Frame):
         self.parent = parent
         
         self.config(background=Config['SERVERSTATUS_BACKGROUND'])
+        
+        self.currentline = 1
         
         self.text = Text(
                          self,
@@ -380,7 +499,42 @@ class ServerStatusFrame(Frame):
         self.text_scroll = Scrollbar(self, command=self.text.yview, background=Config['BUTTON_BACKGROUND'])
         self.text.config(yscrollcommand=self.text_scroll.set)
         self.text_scroll.grid(row=0, column=1, sticky="ns")
-
+    def show(self):
+        self.grid(row=0, column=1, sticky=N + W, rowspan=3)
+    def hide(self):
+        self.grid_forget()
+    def getlinenum(self):
+        self.currentline += 1
+        data = "%d.%d" % (self.currentline , 0)
+        # logfile("Line data = %s right?" % data )
+        return data
+    def insertline(self, text, tag=None):
+        self.text.config(state=NORMAL)
+        if tag == None:
+            self.text.insert(self.getlinenum(), text + '\n')
+        else:
+            self.text.insert(self.getlinenum(), text + '\n', tag)
+        self.text.config(state=DISABLED)
+    def clear(self):
+        self.currentline = 0
+        self.text.config(state=NORMAL)
+        self.text.delete(1.0, END)
+        self.text.config(state=DISABLED)
+class NoticeLabel(Label):
+    def __init__(self, parent=None, cnf={}, **kw):
+        Label.__init__(self, parent, cnf, **kw)
+        self.ServerFrame = parent
+        self.textvar     = StringVar(value="FS_Basepath and FS_Homepath are not required.\nThey will be set to the folder of you ET.exe if not specfied.")
+        
+        self.config(font=FONT,background=Config['WINDOW_BACKGROUND'],textvariable=self.textvar)
+        
+        self.show()
+    def set(self,message=""):
+        self.textvar.set(message)
+    def show(self):
+        self.grid(row=4, column=0, sticky=N + W,rowspan=2)
+    def hide(self):
+        self.grid_forget()
 class ServerFrame(Frame):
     """Frame contains all server related frames"""
     def __init__(self, parent, *args, **kwargs):
@@ -389,7 +543,6 @@ class ServerFrame(Frame):
         
         self.config(background=Config['WINDOW_BACKGROUND'], padx=5, pady=5)
         
-        self.currentline       = 1
         self.HeaderFrame       = HeaderFrame(self)
         self.ServerListFrame   = ServerListFrame(self)
         self.ServerDataFrame   = ServerDataFrame(self)
@@ -403,56 +556,26 @@ class ServerFrame(Frame):
         
         # Bring it all together
         self.create_server_list()
-        self.header_frame.grid_columnconfigure(1, minsize=400)
-        self.header_frame.grid(row=0, column=0, sticky=N + W + E)
-        self.serverlist_frame.grid_columnconfigure(0, weight=1)
-        self.serverlist_frame.grid(row=1, column=0, sticky=N + W)
-        self.serverdata_frame.grid_columnconfigure(1, minsize=400)
-        # self.serverstatus_frame.grid(row=0,column=1,sticky=N+W,rowspan=2)
         
-        self.notice_var = StringVar()
-        self.notice_var.set("FS_Basepath and FS_Homepath are not required.\nThey will be set to the folder of you ET.exe if not specfied.")
-        self.notice_label = Label(self,font=FONT,background=Config['WINDOW_BACKGROUND'],textvariable=self.notice_var)
-        self.notice_label.grid(row=4, column=0, sticky=N + W,rowspan=2)
-        
+        self.HeaderFrame.show()
+        self.ServerListFrame.show()
+        self.NoticeLabel = NoticeLabel(self)
         
         self.grid(sticky=W + S + N + E)
-    def refresh_list(self, selectid=None):
-        self.servers.selection_clear(0, END)
-        self.servers.delete(0, END)
-        self.servermap.selection_clear(0, END)
-        self.servermap.delete(0, END)
-        self.serverplayers.selection_clear(0, END)
-        self.serverplayers.delete(0, END)
-        self.serverping.selection_clear(0, END)
-        self.serverping.delete(0, END)
-        for Server in self.parent.serverdata.Servers:
-            self.servers.insert(END, Server['title'])
-            self.servermap.insert(END, Server['map'])
-            self.serverplayers.insert(END, Server['players'])
-            self.serverping.insert(END, Server['ping'])
-        if selectid:
-            self.servers.select_set(selectid)
-            self.servermap.select_set(selectid)
-            self.serverplayers.select_set(selectid)
-            self.serverping.select_set(selectid)
     def create_server_list(self):
-        self.serverstatus_frame.grid_forget()
-        self.serverdata_frame.grid_forget()
-        self.servertitle_var.set('')
-        self.serveraddress_var.set('')
-        self.serverpassword_var.set('')
-        self.serverparams_var.set('')
-        self.serverfs_basepath_var.set('')
-        self.serverfs_homepath_var.set('')
-        self.serveretpath_var.set('')
+        self.ServerStatusFrame.hide()
+        self.ServerDataFrame.hide()
+        self.ServerDataFrame.clear()
         self.button_joinserver.hide()
         self.button_removeserver.hide()
-        for x in range(0, len(self.parent.serverdata.Servers)):
-            self.serverstatus(x)
+        for x in range(0, len(self.parent.serverdata.Servers)): self.serverstatus(x)
         self.refresh_list(None)
+    def refresh_list(self, selectid=None):
+        self.ServerListFrame.clear()
+        for Server in self.parent.serverdata.Servers: self.ServerListFrame.add(Server)
+        if selectid: self.ServerListFrame.select(selectid)
     # Buttons
-    def addserver(self):  # Leaving error checking up to the join command
+    def addserver(self): # Leaving error checking up to the join command
         servertitle = tkinter.simpledialog.askstring("New Server Title", "Please insert a unique server title")
         if not servertitle or any(s['title'] == servertitle for s in self.parent.serverdata.Servers):
             logfile("Invalid server title")
@@ -463,36 +586,29 @@ class ServerFrame(Frame):
             return
         self.parent.serverdata.add_server({'address':serveraddress, 'title':servertitle})
         self.create_server_list()
-        # Select latest server
-        self.servers.select_set(END)
-        self.servermap.select_set(END)
-        self.serverplayers.select_set(END)
-        self.serverping.select_set(END)
-        self.selectserver(None)
-    def getselection(self):
-        if self.servers.curselection(): return self.servers.curselection()
-        if self.servermap.curselection(): return self.servermap.curselection()
-        if self.serverping.curselection(): return self.serverping.curselection()
-        if self.serverplayers.curselection(): return self.serverplayers.curselection()
-        return None
+        self.ServerListFrame.select(END) # Select added server
+        self.selectserver(None) # Get Server Data
     def removeserver(self):
-        if not self.getselection(): return
-        if not self.parent.serverdata.Servers[self.getselection()[0]]:
-            logfile("Error updating server %d" % self.getselection()[0])
+        selectid = self.ServerListFrame.get()
+        if selectid == None: return
+        if not self.parent.serverdata.Servers[selectid]:
+            logfile("Error updating server %d" % selectid)
             return
-        del self.parent.serverdata.Servers[self.getselection()[0]]
+        del self.parent.serverdata.Servers[selectid]
         self.create_server_list()
-    def getcommandline(self):
-        if not self.getselection(): return
-        Server = self.parent.serverdata.Servers[self.getselection()[0]]
+    def getcommandline(self,selectid=None):
+        # TODO Move this to serverdata
+        #selectid = self.ServerListFrame.get()
+        if selectid == None: return
+        Server = self.parent.serverdata.Servers[selectid]
         if not Server:
-            logfile("Error updating server %d" % self.getselection()[0])
+            logfile("Error getting command line for server %d" % selectid)
             return
         # Generate Startup Line #
         etpath      = ''
         fs_basepath = ''
         fs_homepath = ''
-        fs_game     = 'etmain'
+        fs_game     = 'etmain' # Etmain by default if mod does not exist
         parameters  = ''
         address     = Server['address']
         password    = Server['password']
@@ -551,146 +667,84 @@ class ServerFrame(Frame):
         logfile(command_line)
         return command_line
     def joinserver(self,e=None):
-        command_line = self.getcommandline()
+        selectid = self.ServerListFrame.get()
+        if selectid == None: return
+        command_line = self.getcommandline(selectid)
         if not command_line: return
-        if not self.getselection(): return
-        Server = self.parent.serverdata.Servers[self.getselection()[0]]
-        if not Server:
-            logfile("Error updating server %d" % self.getselection()[0])
-            return
-        logfile("Joining server %s" % Server['title'])
+        logfile("Joining server %s" % selectid)
         openprocess(command_line)
+    def serverstatus(self, selectid=None):
+        specificserver = False
+        if selectid == None:
+            selectid = self.ServerListFrame.get()
+        else:
+            specificserver = True
+        if selectid == None: return
         
-    def getcolortags(self, textstr):
-        pass
-    def getlinenum(self):
-        self.currentline += 1
-        data = "%d.%d" % (self.currentline , 0)
-        # logfile("Line data = %s right?" % data )
-        return data
-    def insertline(self, text, tag=None):
-        self.text.config(state=NORMAL)
-        if not tag:
-            self.text.insert(self.getlinenum(), text + '\n')
-        else:
-            self.text.insert(self.getlinenum(), text + '\n', tag)
-        self.text.config(state=DISABLED)
-    def serverstatus(self, specificserver=None):
-        if specificserver != None:
-            selectid = (specificserver,)
-        else:
-            selectid = self.getselection()
-        if not selectid: return
-        Server = self.parent.serverdata.Servers[selectid[0]]
+        Server = self.parent.serverdata.Servers[selectid]
+        
         if not Server:
-            logfile("Error getting server playerlist %d" % selectid[0])
+            logfile("Error getting server playerlist %d" % selectid)
             return
-        logfile("Getting serverstatus for %d (%s)" % (selectid[0], Server['title']))
-        self.currentline = 0
         
-        self.parent.serverdata.getstatus(selectid[0])
+        logfile("Getting serverstatus for %d (%s)" % (selectid, Server['title']))
+        
+        self.parent.serverdata.getstatus(selectid)
+        
         if Server['ping'] <= 0:
             logfile("Could not ping server")
             return
-        halflen = int((SERVERSTATUS_TEXT_LENGTH - 3) / 2)
-        if specificserver == None:
-            headerlength = SERVERSTATUS_TEXT_LENGTH - 14
-            self.text.config(state=NORMAL)
-            self.text.delete(1.0, END)
-            self.text.config(state=DISABLED)
-            if "sv_hostname" in Server['cvar']: self.insertline("%s : %s" % ( "Server Name".ljust(11) , cleanstr(Server['cvar']['sv_hostname']).ljust(headerlength) ) )
-            if "mapname" in Server['cvar']: self.insertline("%s : %s" % ( "Map".ljust(11) , Server['cvar']['mapname'].ljust(headerlength)) )
-            if "gamename" in Server['cvar']: self.insertline("%s : %s" % ( "Mod".ljust(11), Server['cvar']['gamename'].ljust(headerlength)) )
-            self.insertline("%s : %s" % ( "Ping".ljust(11) , (str(Server['ping']) + 'ms').ljust(headerlength)) )
-            self.insertline('')
-            self.insertline("%s %s %s" % ("Name".ljust(PLAYER_NAME_LENGTH) , "Ping".ljust(PLAYER_PING_LENGTH) , "Score".ljust(PLAYER_SCORE_LENGTH)), "headerLine")
+        
+        if not specificserver:
+            self.ServerStatusFrame.clear()
+            if "sv_hostname" in Server['cvar']:
+                self.ServerStatusFrame.insertline("%s : %s" % ( "Server Name".ljust(11) , cleanstr(Server['cvar']['sv_hostname']).ljust(HEADERLENGTH) ) )
+            if "mapname" in Server['cvar']:
+                self.ServerStatusFrame.insertline("%s : %s" % ( "Map".ljust(11) , Server['cvar']['mapname'].ljust(HEADERLENGTH)) )
+            if "gamename" in Server['cvar']:
+                self.ServerStatusFrame.insertline("%s : %s" % ( "Mod".ljust(11), Server['cvar']['gamename'].ljust(HEADERLENGTH)) )
+            self.ServerStatusFrame.insertline("%s : %s" % ( "Ping".ljust(11) , (str(Server['ping']) + 'ms').ljust(HEADERLENGTH)) )
+            self.ServerStatusFrame.insertline('')
+            self.ServerStatusFrame.insertline("%s %s %s" % ("Name".ljust(PLAYER_NAME_LENGTH) , "Ping".ljust(PLAYER_PING_LENGTH) , "Score".ljust(PLAYER_SCORE_LENGTH)), "headerLine")
         
         currentplayers = 0
-        currentbots = 0
+        currentbots    = 0
         for Player in Server['playerlist']:
             if Player['ping'] == 0:
                 currentbots += 1
             else:
                 currentplayers += 1
-            if specificserver == None:
+            if not specificserver:
                 name = cleanstr(Player['name'][:PLAYER_NAME_LENGTH]) if len(cleanstr(Player['name'])) > PLAYER_NAME_LENGTH else cleanstr(Player['name'])
-                self.insertline("%s %s %s" % (name.ljust(PLAYER_NAME_LENGTH) , str(Player['ping']).ljust(PLAYER_PING_LENGTH) , str(Player['score']).ljust(PLAYER_SCORE_LENGTH)))
+                self.ServerStatusFrame.insertline("%s %s %s" % (name.ljust(PLAYER_NAME_LENGTH) , str(Player['ping']).ljust(PLAYER_PING_LENGTH) , str(Player['score']).ljust(PLAYER_SCORE_LENGTH)))
         Server['players'] = "%d/%d (%d)" % (currentplayers , int(Server['cvar']['sv_maxclients']) , currentbots)
-        if specificserver == None:
-            self.insertline('')
-            self.insertline('')
-            self.insertline("%s | %s" % ("Cvar".ljust(halflen) , "Value".ljust(halflen)) , "headerLine")
+        
+        if not specificserver:
+            self.ServerStatusFrame.insertline('')
+            self.ServerStatusFrame.insertline('')
+            self.ServerStatusFrame.insertline("%s | %s" % ("Cvar".ljust(HALFLEN) , "Value".ljust(HALFLEN)) , "headerLine")
             for Cvar in Server['cvar']:
-                self.insertline("%s = %s" % (Cvar.ljust(halflen) , Server['cvar'][Cvar].ljust(halflen)))
+                self.ServerStatusFrame.insertline("%s = %s" % (Cvar.ljust(HALFLEN) , Server['cvar'][Cvar].ljust(HALFLEN)))
             
         self.refresh_list(selectid)
         if specificserver == None:
             if 'g_needpass' in Server['cvar'] and int(Server['cvar']['g_needpass']) == 1:
-                self.serverpassword_label.grid(row=1, column=0, sticky=N + W)
-                self.serverpassword_entry.grid(row=1, column=1, sticky=N + W + E)
+                self.ServerDataFrame.showpassword()
             else:
-                self.serverpassword_label.grid_forget()
-                self.serverpassword_entry.grid_forget()
-            self.serverstatus_frame.grid(row=0, column=1, sticky=N + W, rowspan=3)
+                self.ServerDataFrame.hidepassword()
+            self.ServerStatusFrame.show()
     # Events
-    def OnMouseWheel(self, event):
-        #print(event.delta)
-        delta = event.delta*-1
-        #print(delta)
-        self.servers.yview("scroll", delta,"units")
-        self.servermap.yview("scroll", delta,"units")
-        self.serverping.yview("scroll", delta,"units")
-        self.serverplayers.yview("scroll", delta,"units")
-        return "break"
-    def selectserver(self, e):
-        selectid = self.getselection()
-        if not selectid: return
-        self.servers.select_set(selectid)
-        self.servermap.select_set(selectid)
-        self.serverplayers.select_set(selectid)
-        self.serverping.select_set(selectid)
-        Server = self.parent.serverdata.Servers[selectid[0]]
-        if not Server:
-            logfile("Error updating server %d" % selectid[0])
-            return
-        logfile("Selecting server %s" % Server['title'])
-        self.servertitle_var.set(Server['title'])
-        self.serveraddress_var.set(Server['address'])
-        self.serverpassword_var.set(Server['password'])
-        self.serverparams_var.set(Server['parameters'])
-        self.serverfs_basepath_var.set(Server['fs_basepath'])
-        self.serverfs_homepath_var.set(Server['fs_homepath'])
-        self.serveretpath_var.set(Server['ETPath'])
-        self.button_joinserver.show()
-        self.button_removeserver.show()
-        self.serverstatus()
-        self.serverdata_frame.grid(row=2, column=0, sticky=N)
-        command_line = self.getcommandline()
-        if command_line: self.notice_var.set(command_line.replace('+','\n+'))
     def updateserver(self, e):
-        selectid = self.getselection()
+        selectid = self.ServerListFrame.get()
         if not selectid: return
-        Server = self.parent.serverdata.Servers[selectid[0]]
+        Server = self.parent.serverdata.Servers[selectid]
         if not Server:
-            logfile("Error updating server %d" % selectid[0])
+            logfile("Error updating server %d" % selectid)
             return
-        logfile("Updating %s" % Server['title'])
-        logfile(selectid)
-        if self.servertitle_var.get():
-            Server['title'] = self.servertitle_var.get()
-            self.refresh_list(selectid)
-        if self.serveraddress_var.get(): Server['address'] = self.serveraddress_var.get()
-        if self.serverpassword_var.get(): Server['password'] = self.serverpassword_var.get()
-        if self.serverparams_var.get(): Server['parameters'] = self.serverparams_var.get()
-        if self.serverfs_basepath_var.get() and isdir(self.serverfs_basepath_var.get()): Server['fs_basepath'] = self.serverfs_basepath_var.get()
-        if self.serverfs_homepath_var.get() and isdir(self.serverfs_homepath_var.get()): Server['fs_homepath'] = self.serverfs_homepath_var.get()
-        if self.serveretpath_var.get() and isfile(self.serveretpath_var.get()): Server['ETPath'] = self.serveretpath_var.get()
+        logfile("Updating %s at %d" % ( Server['title'] , selectid ) )
         
-    def updateconfig(self, e):
-        if self.fs_basepath_var.get() and isdir(self.fs_basepath_var.get()): self.parent.serverdata.fs_basepath = self.fs_basepath_var.get()
-        if self.fs_homepath_var.get() and isdir(self.fs_homepath_var.get()): self.parent.serverdata.fs_homepath = self.fs_homepath_var.get()
-        if self.etpath_var.get() and isfile(self.etpath_var.get()): self.parent.serverdata.ETPath = self.etpath_var.get()
-        if self.parameters_var.get(): self.parent.serverdata.parameters = self.parameters_var.get()
+        self.ServerDataFrame.updateserver(Server)
+        self.refresh_list(selectid)
     # Methods
     def getpath(self, browse_var=None, updatemethod=None):
         if not browse_var: return
@@ -724,11 +778,13 @@ class ServerFrame(Frame):
             logfile("Could not find filepath")
 class Window(Frame):
     def __init__(self, *args, **kwargs):
+        global FONT
         self.focus_ignore = False
         self.minimized    = False
         self.parent       = Tk()
         self.serverdata   = ServerData()
         self.serversframe = None
+        FONT              = tkinter.font.Font(family="Courier New", size=10)
         
         Frame.__init__(self, self.parent, *args, **kwargs)
         
@@ -780,8 +836,6 @@ class Window(Frame):
         self.serverdata.save_serverfile(Config['servers'])
         jsonfile = open(join(getcwd() , 'wolfstarter.json'), 'w')
         json.dump(Config, jsonfile, skipkeys=True, allow_nan=True, sort_keys=True, indent=4)
-    def destroy_sub_windows(self):
-        pass
     # Opening and closing files and application
     def openfile(self):
         self.focus_ignore = True
