@@ -1,5 +1,5 @@
 import json
-from os import getcwd
+from os import getcwd,startfile
 from os.path import isfile, join, isdir
 from re import compile
 from subprocess import Popen
@@ -11,8 +11,6 @@ import tkinter.simpledialog
 
 from zelly.serverdata import ServerData
 
-def openprocess(command):
-    Popen(command,shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)
     
 FONT       = None
 BLACK      = "#000000"
@@ -52,6 +50,32 @@ SERVERSTATUS_TEXT_LENGTH = 54
 HALFLEN = int((SERVERSTATUS_TEXT_LENGTH - 3) / 2)
 HEADERLENGTH = SERVERSTATUS_TEXT_LENGTH - 14
 
+# BUTTON ORDERING
+BUTTON_OPEN     = 0
+BUTTON_SAVE     = 1
+BUTTON_ADD      = 2
+BUTTON_REMOVE   = 3
+BUTTON_JOIN     = 4
+BUTTON_ISSUE    = 5
+BUTTON_DONATE   = 6
+BUTTON_MINIMIZE = 7
+BUTTON_QUIT     = 8
+LABEL_VERSION   = 9
+
+# FRAME ORDER
+# FRAME_WINDOW None - Is entire window
+# FRAME_SERVER None - Is entire window(with padding)
+FRAME_NAVBAR = (0,0)
+FRAME_HEADER = (0,0)
+FRAME_SERVERLIST = (1,0)
+FRAME_SERVERDATA = (2,0)
+FRAME_SERVERSTATUS = (0,1)
+LABEL_NOTICE = (3,0)
+
+def openprocess(command):
+    """Opens process without making current application hang"""
+    Popen(command,shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)
+
 clean_pattern = compile("(\^.)") #(\^[\d\.\w=\-]?)
 def cleanstr(s):
     """Cleans color codes from an W:ET String"""
@@ -68,7 +92,7 @@ class MenuButton(Button):
     parent -- Should be Navbar
     column -- Placement from left to right
     row    -- Should probably always be 0 but added just incase"""
-    def __init__(self, parent=None, column=0, row=0, cnf={}, **kw):
+    def __init__(self, parent=None, column=0, row=0,sticky=W,cnf={}, **kw):
         Button.__init__(self, parent, cnf, **kw)
         self.parent = parent
         logfile("Making button with background %s" % Config['BUTTON_BACKGROUND'])
@@ -84,12 +108,13 @@ class MenuButton(Button):
                     padx=12,
                     cursor="hand2",
                 )
-        self.row = row
+        self.sticky = sticky
+        self.row    = row
         self.column = column
         self.hide()
     def show(self):
         """Adds it self to the navbar grid"""
-        self.grid(row=self.row, column=self.column, sticky=W)
+        self.grid(row=self.row, column=self.column, sticky=self.sticky)
     def hide(self):
         """Hides itself from the grid"""
         self.grid_forget()
@@ -115,14 +140,13 @@ class NavBar(Frame):
         Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.config(background=Config['NAVBAR_BACKGROUND'] , cursor="hand1")
-        # Open 1
-        # Save 2
-        # Minimize 9
-        # Quit 10
-        self.button_open     = MenuButton(self , 0 , text="Open..."    , command=parent.openfile)
-        self.button_saveas   = MenuButton(self , 1 , text="Save..."  , command=parent.saveasfile)
-        self.button_minimize = MenuButton(self , 9 , text="Minimize"  , command=self.minimize)
-        self.button_quit     = MenuButton(self , 10 , text="Quit"       , command=parent.quit)
+        
+        self.button_open     = MenuButton(self , BUTTON_OPEN     , text="Open..."    , command=parent.openfile)
+        self.button_saveas   = MenuButton(self , BUTTON_SAVE     , text="Save..."    , command=parent.saveasfile)
+        self.button_issues   = MenuButton(self , BUTTON_ISSUE    , 0 , E , text="Issue..."   , command=self.issue)
+        self.button_donate   = MenuButton(self , BUTTON_DONATE   , 0 , E , text="Donate..."   , command=self.donate)
+        self.button_minimize = MenuButton(self , BUTTON_MINIMIZE , 0 , E , text="Minimize"   , command=self.minimize)
+        self.button_quit     = MenuButton(self , BUTTON_QUIT     , 0 , E , text="Quit"       , command=parent.quit)
         try:
             with open('version.txt','rb') as versionfile: version=versionfile.read().decode()
         except OSError:
@@ -138,18 +162,39 @@ class NavBar(Frame):
                                      padx=12,
                                      text=version
                                      )
-        self.versionlabel.grid(column=11,row=0,sticky=E)
+        self.versionlabel.grid(column=LABEL_VERSION,row=0,sticky=E)
+        self.columnconfigure(BUTTON_ISSUE,weight=1)
+        
         self.button_open.show()
         self.button_saveas.show()
+        self.button_issues.show()
+        self.button_donate.show()
         self.button_minimize.show()
         self.button_quit.show()
         
-        self.grid(column=0, row=0, sticky=N + W + E + S)
-        self.columnconfigure(11,weight=1)
+        self.grid(column=FRAME_NAVBAR[0], row=FRAME_NAVBAR[0], sticky=N + W + E + S)
     def minimize(self):
         self.parent.minimized = True
         self.parent.parent.overrideredirect(False)
         self.parent.parent.iconify()
+    def issue(self):
+        self.parent.parent.overrideredirect(False)
+        self.parent.focus_ignore = True
+        ok = tkinter.messagebox.askyesno("Open issues page", "Would you like to go to the github issues page?",parent=self.parent.parent)
+        self.parent.focus_ignore = False
+        self.parent.parent.overrideredirect(True)
+        if ok: startfile(r"https://github.com/Zelly/ETWolfStarter/issues/new")
+    def donate(self):
+        print("Opening donate dialog")
+        self.parent.parent.overrideredirect(False)
+        self.parent.focus_ignore = True
+        ok = tkinter.messagebox.askyesno(title="Open donate page", message="Would you like to go to the paypal donate page?",parent=self.parent)
+        self.parent.focus_ignore = False
+        self.parent.parent.overrideredirect(True)
+        if ok:
+            print("Open page")
+            startfile(r"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=45BP8LRVZW7JC&lc=US&item_name=Zelly%20Github%20Donate&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted")
+    
 
 class HeaderFrame(Frame):
     """Frame containing global parameters to be applied to all servers by default"""
@@ -208,7 +253,7 @@ class HeaderFrame(Frame):
         
         self.grid_columnconfigure(1, minsize=400)
     def show(self):
-        self.grid(row=0, column=0, sticky=N + W + E)
+        self.grid(row=FRAME_HEADER[0], column=FRAME_HEADER[1], sticky=N + W + E)
     def hide(self):
         self.grid_forget()
     def updateconfig(self, e):
@@ -295,7 +340,7 @@ class ServerListFrame(Frame):
         
         self.grid_columnconfigure(0, weight=1)
     def show(self):
-        self.grid(row=1, column=0, sticky=N + W)
+        self.grid(row=FRAME_SERVERLIST[0], column=FRAME_SERVERLIST[1], sticky=N + W)
     def hide(self):
         self.grid_forget()
     def clear(self):
@@ -435,7 +480,7 @@ class ServerDataFrame(Frame):
         self.serverparams_entry.grid( row=6, column=1, sticky=N + W + E)
         self.grid_columnconfigure(1, minsize=400)
     def show(self):
-        self.grid(row=2, column=0, sticky=N)
+        self.grid(row=FRAME_SERVERDATA[0], column=FRAME_SERVERDATA[1], sticky=N)
     def hide(self):
         self.grid_forget()
     def showpassword(self):
@@ -500,7 +545,7 @@ class ServerStatusFrame(Frame):
         self.text_scroll.grid(row=0, column=1, sticky="ns")
     def show(self):
         print("Showing frame")
-        self.grid(row=0, column=1, sticky=N + W, rowspan=4)
+        self.grid(row=FRAME_SERVERSTATUS[0], column=FRAME_SERVERSTATUS[1], sticky=N + W, rowspan=4)
     def hide(self):
         self.grid_forget()
     def getlinenum(self):
@@ -532,7 +577,7 @@ class NoticeLabel(Label):
     def set(self,message=""):
         self.textvar.set(message)
     def show(self):
-        self.grid(row=3, column=0, sticky=N + W,rowspan=2)
+        self.grid(row=LABEL_NOTICE[0], column=LABEL_NOTICE[1], sticky=N + W,rowspan=2)
     def hide(self):
         self.grid_forget()
 class ServerFrame(Frame):
@@ -548,10 +593,10 @@ class ServerFrame(Frame):
         self.ServerDataFrame   = ServerDataFrame(self)
         self.ServerStatusFrame = ServerStatusFrame(self)
         
-        self.button_addserver    = MenuButton(self.parent.navbar , 3 , text="Add"        , command=self.addserver)
-        self.button_removeserver = MenuButton(self.parent.navbar , 4 , text="Remove"     , command=self.removeserver)
-        #self.button_rcon         = MenuButton( self.parent.navbar , 5 , text="Rcon"       , command=parent.rcon)
-        self.button_joinserver   = MenuButton(self.parent.navbar , 6 , text="Join"       , command=self.joinserver)
+        self.button_addserver    = MenuButton(self.parent.navbar , BUTTON_ADD    , text="Add"        , command=self.addserver)
+        self.button_removeserver = MenuButton(self.parent.navbar , BUTTON_REMOVE , text="Remove"     , command=self.removeserver)
+        #self.button_rcon         = MenuButton( self.parent.navbar , BUTTON_RCON , text="Rcon"       , command=parent.rcon)
+        self.button_joinserver   = MenuButton(self.parent.navbar , BUTTON_JOIN   , text="Join"       , command=self.joinserver)
         self.button_addserver.show()
         
         

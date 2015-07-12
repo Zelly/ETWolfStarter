@@ -17,6 +17,16 @@ Wolfenstein: Enemy Territory launcher.
 If you wish to donate I would be grateful, maybe I could buy a new computer!  
 
 ## Changes
+### 1.3.0  
+* Added issues button to link to issues page issue #2  
+* Added donate button to link to paypal donate page  
+* Added version to the navbar  
+* Added a 100ms delay for pinging server so the application will now load the main part first issue #5  
+* Fixed process hanging after starting ET issue #7  
+* Fixed minimize glitching focus out issue #8  
+* Separated frames into their own class for a more modular approach issue #3  
+* Cleaned up some code while separating frames
+* Improved the builder  
 ### 1.2.1
 * Added an automatic updater (testing)
 * Added an icon
@@ -52,7 +62,13 @@ Will open a servers json file which contains a list of servers. You won't have o
 By default the first server file will save to servers.json next to your executable. If you want to change this you can select a new area to save here. If you want to save all your silent mod servers in one file you can save your list as silent.json and then for etpro servers save that list as etpro.json.
 #### Quit
 Saves your server list to the serversfile you have selected with Save...  
-**Warning: If you close the application some other way, your data will not save**
+**Warning: If you close the application some other way, your data will not save**  
+#### Minimize
+Will minimize the application  
+#### Issue...  
+Will bring you to the github issues page  
+#### Donatebutton...  
+Will bring you to paypal donate page.  
 #### Add
 Will ask you for a unique title and unique IP to a server.  
 After inputted you will see your server added to your list.
@@ -83,4 +99,6 @@ Another note is that the gamename will be applied to your startup line as well.
 This means the launcher will start in the mod you are connecting to, which could cause errors if you do not have the mod.(Will fix in later versions, is pretty easy)  
 
 ## Configuring
-In wolfstarter.json there is color codes you can change if you want different colors for the application.
+In wolfstarter.json there is color codes you can change if you want different colors for the application.  
+You can also disable launching the fs_game mod when connecting by setting launchmod to false.  
+If you do not wish to check for updates then start WolfStarter.exe --no-update  

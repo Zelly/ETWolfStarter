@@ -11,7 +11,7 @@ from zipfile import is_zipfile,ZipFile
 from subprocess import Popen
 from sys import exit,argv
 
-WOLFSTARTER_VERSION = "v1.2.2"
+WOLFSTARTER_VERSION = "v1.3.0"
 
 DELETEZIPLIST=[]
 

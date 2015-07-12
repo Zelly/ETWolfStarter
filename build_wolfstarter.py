@@ -69,5 +69,5 @@ def temp():
     print("Creating temp wolfstarter")
     call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefolder_updater_dist --workpath=./onefolder_updater_build -y -w --onedir updater/WolfStarterUpdater.py")
 if __name__ == "__main__":
-    #main()
-    temp()
+    main()
+    #temp()
