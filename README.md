@@ -4,7 +4,7 @@ Wolfenstein: Enemy Territory launcher.
 * Add servers to favourites, and see who is on the server.
 * Customize per servers file(a collection of related server favourites) or per server your parameters,paths, and executable.  
   
-![e520f9ebe590c73cf185b3c44d966954](http://i.gyazo.com/e520f9ebe590c73cf185b3c44d966954.png)
+![0690b2f3aeb4937e3edf85aa47fc53d5](http://i.gyazo.com/0690b2f3aeb4937e3edf85aa47fc53d5.png)
 ## Table of Contents  
 * **[Donate](#donate)**  
 * **[Changes](#changes)**  
