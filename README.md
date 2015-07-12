@@ -27,6 +27,7 @@ If you wish to donate I would be grateful, maybe I could buy a new computer!
 * Separated frames into their own class for a more modular approach issue #3  
 * Cleaned up some code while separating frames
 * Improved the builder  
+  
 ### 1.2.1
 * Added an automatic updater (testing)
 * Added an icon
