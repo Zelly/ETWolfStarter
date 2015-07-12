@@ -237,7 +237,7 @@ class ServerListFrame(Frame):
                                      activestyle="none")
         
         self.servers.bind("<<ListboxSelect>>", self.selectserver)
-        self.servers.bind("<Double-Button-1>", self.joinserver)
+        self.servers.bind("<Double-Button-1>", self.ServerFrame.joinserver)
         self.servers.bind("<MouseWheel>", self.OnMouseWheel)
         self.servers_label.grid(row=0, column=0, sticky=N + W + E)
         self.servers.grid(row=1, column=0, sticky=N + W + E)
@@ -254,7 +254,7 @@ class ServerListFrame(Frame):
                                        activestyle="none")
         
         self.servermap.bind("<<ListboxSelect>>", self.selectserver)
-        self.servermap.bind("<Double-Button-1>", self.joinserver)
+        self.servermap.bind("<Double-Button-1>", self.ServerFrame.joinserver)
         self.servermap.bind("<MouseWheel>", self.OnMouseWheel)
         self.servermap_label.grid(row=0, column=1, sticky=N + W + E)
         self.servermap.grid(row=1, column=1, sticky=N + W + E)
@@ -271,7 +271,7 @@ class ServerListFrame(Frame):
                                            activestyle="none")
         
         self.serverplayers.bind("<<ListboxSelect>>", self.selectserver)
-        self.serverplayers.bind("<Double-Button-1>", self.joinserver)
+        self.serverplayers.bind("<Double-Button-1>", self.ServerFrame.joinserver)
         self.serverplayers.bind("<MouseWheel>", self.OnMouseWheel)
         self.serverplayers_label.grid(row=0, column=2, sticky=N + W + E)
         self.serverplayers.grid(row=1, column=2, sticky=N + W + E)
@@ -288,7 +288,7 @@ class ServerListFrame(Frame):
                                         activestyle="none")
         
         self.serverping.bind("<<ListboxSelect>>", self.selectserver)
-        self.serverping.bind("<Double-Button-1>", self.joinserver)
+        self.serverping.bind("<Double-Button-1>", self.ServerFrame.joinserver)
         self.serverping.bind("<MouseWheel>", self.OnMouseWheel)
         self.serverping_label.grid(row=0, column=3, sticky=N + W + E)
         self.serverping.grid(row=1, column=3, sticky=N + W + E)
@@ -314,7 +314,7 @@ class ServerListFrame(Frame):
         self.serverplayers.insert(END , Server['players'])
         self.serverping.insert(END    , Server['ping'])
     def select(self,selectid=None):
-        if not selectid: return
+        if selectid == None: return
         self.servers.select_set(selectid)
         self.servermap.select_set(selectid)
         self.serverplayers.select_set(selectid)
@@ -332,9 +332,7 @@ class ServerListFrame(Frame):
         if self.serverplayers.curselection(): return self.serverplayers.curselection()
         return None
     def OnMouseWheel(self, event):
-        #print(event.delta)
         delta = event.delta*-1
-        #print(delta)
         self.servers.yview("scroll", delta,"units")
         self.servermap.yview("scroll", delta,"units")
         self.serverping.yview("scroll", delta,"units")
@@ -342,16 +340,16 @@ class ServerListFrame(Frame):
         return "break"
     def selectserver(self, e):
         selectid = self.get()
-        if not selectid: return
+        if selectid == None: return
         
         Server = self.ServerFrame.parent.serverdata.Servers[selectid]
         if not Server:
-            logfile("Error updating server %d" % selectid)
+            logfile("Error selecting server %d" % selectid)
             return
         
         logfile("Selecting server %s" % Server['title'])
-        
-        self.select(self.getfull())
+
+        self.select((selectid,))
         self.ServerFrame.ServerDataFrame.set(Server)
         
         self.ServerFrame.button_joinserver.show()
@@ -455,6 +453,7 @@ class ServerDataFrame(Frame):
         self.serverfs_basepath_var.set(Server['fs_basepath'])
         self.serverfs_homepath_var.set(Server['fs_homepath'])
         self.serveretpath_var.set(Server['ETPath'])
+        self.show()
     def updateserver(self,Server=None):
         if not Server: return
         if self.servertitle_var.get(): Server['title'] = self.servertitle_var.get()
@@ -489,7 +488,7 @@ class ServerStatusFrame(Frame):
                          relief="flat",
                          wrap="none",
                          width=54,
-                         height=29,
+                         height=35,
                          )
 
         self.text.tag_config("headerLine", foreground=Config['BUTTON_FOREGROUND'], background=Config['BUTTON_BACKGROUND'], underline=1)
@@ -500,7 +499,8 @@ class ServerStatusFrame(Frame):
         self.text.config(yscrollcommand=self.text_scroll.set)
         self.text_scroll.grid(row=0, column=1, sticky="ns")
     def show(self):
-        self.grid(row=0, column=1, sticky=N + W, rowspan=3)
+        print("Showing frame")
+        self.grid(row=0, column=1, sticky=N + W, rowspan=4)
     def hide(self):
         self.grid_forget()
     def getlinenum(self):
@@ -532,7 +532,7 @@ class NoticeLabel(Label):
     def set(self,message=""):
         self.textvar.set(message)
     def show(self):
-        self.grid(row=4, column=0, sticky=N + W,rowspan=2)
+        self.grid(row=3, column=0, sticky=N + W,rowspan=2)
     def hide(self):
         self.grid_forget()
 class ServerFrame(Frame):
@@ -554,14 +554,14 @@ class ServerFrame(Frame):
         self.button_joinserver   = MenuButton(self.parent.navbar , 6 , text="Join"       , command=self.joinserver)
         self.button_addserver.show()
         
-        # Bring it all together
-        self.create_server_list()
         
         self.HeaderFrame.show()
         self.ServerListFrame.show()
         self.NoticeLabel = NoticeLabel(self)
         
         self.grid(sticky=W + S + N + E)
+        
+        self.after(100, self.create_server_list)
     def create_server_list(self):
         self.ServerStatusFrame.hide()
         self.ServerDataFrame.hide()
@@ -573,7 +573,7 @@ class ServerFrame(Frame):
     def refresh_list(self, selectid=None):
         self.ServerListFrame.clear()
         for Server in self.parent.serverdata.Servers: self.ServerListFrame.add(Server)
-        if selectid: self.ServerListFrame.select(selectid)
+        if selectid != None: self.ServerListFrame.select(selectid)
     # Buttons
     def addserver(self): # Leaving error checking up to the join command
         servertitle = tkinter.simpledialog.askstring("New Server Title", "Please insert a unique server title")
@@ -727,7 +727,7 @@ class ServerFrame(Frame):
                 self.ServerStatusFrame.insertline("%s = %s" % (Cvar.ljust(HALFLEN) , Server['cvar'][Cvar].ljust(HALFLEN)))
             
         self.refresh_list(selectid)
-        if specificserver == None:
+        if not specificserver:
             if 'g_needpass' in Server['cvar'] and int(Server['cvar']['g_needpass']) == 1:
                 self.ServerDataFrame.showpassword()
             else:
@@ -736,10 +736,10 @@ class ServerFrame(Frame):
     # Events
     def updateserver(self, e):
         selectid = self.ServerListFrame.get()
-        if not selectid: return
+        if selectid == None: return
         Server = self.parent.serverdata.Servers[selectid]
         if not Server:
-            logfile("Error updating server %d" % selectid)
+            logfile("Error updating server status %d" % selectid)
             return
         logfile("Updating %s at %d" % ( Server['title'] , selectid ) )
         
