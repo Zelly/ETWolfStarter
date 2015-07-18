@@ -1,4 +1,9 @@
+from subprocess import Popen
+
 WOLFSTARTER_VERSION = "v1.3.1"
+UPDATE_RAWSRC_URL  = r"https://raw.githubusercontent.com/Zelly/ETWolfStarter/master/"
+UPDATE_RELEASE_URL = r"https://github.com/Zelly/ETWolfStarter/releases/download/"
+
 BLACK      = "#000000"
 DARK_GREY  = "#282828"
 GREY       = "#484848"
@@ -33,3 +38,12 @@ FRAME_SERVERLIST = (1,0)
 FRAME_SERVERDATA = (2,0)
 FRAME_SERVERSTATUS = (0,1)
 LABEL_NOTICE = (3,0)
+
+def logfile(msg):
+    print(msg)
+    with open("wolfstarter.log","a") as errorlog:
+        errorlog.write('%s\n' % msg)
+
+def openprocess(command):
+    """Opens process without making current application hang"""
+    Popen(command,shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)

@@ -2,7 +2,6 @@ import json
 from os import getcwd,startfile
 from os.path import isfile, join, isdir
 from re import compile
-from subprocess import Popen
 from tkinter import *  # @UnusedWildImport
 import tkinter.filedialog
 import tkinter.font
@@ -37,20 +36,10 @@ Config = {
           'launchmod'                  : True,
           }
 
-def openprocess(command):
-    """Opens process without making current application hang"""
-    Popen(command,shell=True,stdin=None, stdout=None, stderr=None, close_fds=True)
-
 clean_pattern = compile("(\^.)") #(\^[\d\.\w=\-]?)
 def cleanstr(s):
     """Cleans color codes from an W:ET String"""
     return clean_pattern.sub("", s)
-
-def logfile(msg):
-    """Prints message and logs to log file"""
-    print(msg)
-    with open("wolfstarter.log","a") as log_file:
-        log_file.write('%s\n' % msg)
 
 class MenuButton(Button):
     """Flat styled button to be placed on navbar
@@ -112,11 +101,7 @@ class NavBar(Frame):
         self.button_donate   = MenuButton(self , BUTTON_DONATE   , 0 , E , text="Donate..."   , command=self.donate)
         self.button_minimize = MenuButton(self , BUTTON_MINIMIZE , 0 , E , text="Minimize"   , command=self.minimize)
         self.button_quit     = MenuButton(self , BUTTON_QUIT     , 0 , E , text="Quit"       , command=parent.quit)
-        try:
-            with open('version.txt','rb') as versionfile: version=versionfile.read().decode()
-        except OSError:
-            print("Couldn't get version")
-        if not version: version = "vX.X.X"
+        
         self.versionlabel    = Label(self,
                                      background=Config['BUTTON_BACKGROUND'],
                                      foreground=Config['BUTTON_FOREGROUND'],
@@ -125,7 +110,7 @@ class NavBar(Frame):
                                      width=5,
                                      height=2,
                                      padx=12,
-                                     text=version
+                                     text=WOLFSTARTER_VERSION
                                      )
         self.versionlabel.grid(column=LABEL_VERSION,row=0,sticky=E)
         self.columnconfigure(BUTTON_ISSUE,weight=1)

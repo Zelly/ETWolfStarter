@@ -4,8 +4,12 @@ from os import makedirs,walk,getcwd,chdir
 from os.path import isdir,exists,join,abspath
 from zipfile import ZipFile,ZIP_DEFLATED
 from zelly.constants import WOLFSTARTER_VERSION
+
 buildOneFile=False
 buildUpdater=True
+# TODO Write Version text on buil;d
+
+
 def zipdir(path,zippath,mode="w",extradir=None):
     zippath = abspath(zippath)
     cwd     = getcwd()
@@ -25,9 +29,11 @@ def rmtree_z(dirpath):
     if not dirpath or not isdir(dirpath): return
     print("Removing directory tree %s" % dirpath)
     rmtree(dirpath)
+    
 def copyfile_z(filename,filepath):
     print("Moving %s to %s" % (filename,filepath))
     copyfile(filename,filepath)
+    
 def main():
     version = input("What version tag are you using? (Hit enter to use %s)" % WOLFSTARTER_VERSION)
     if not version: version = WOLFSTARTER_VERSION.replace('v','')
@@ -54,12 +60,12 @@ def main():
         print("Building WolfStarterUpdater")
         if buildOneFile:
             print("Building WolfStarterUpdater[One File]")
-            call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefile_updater_dist --workpath=./onefile_updater_build -y -w --onefile updater/WolfStarterUpdater.py")
+            call("pyinstaller --uac-admin --icon=WolfStarterLogo.ico --distpath=./onefile_updater_dist --workpath=./onefile_updater_build -y -w --onefile WolfStarterUpdater.py")
             print("Moving WolfStarterUpdater.exe[One File]")
             move("onefile_updater_dist/WolfStarterUpdater.exe","%s/WolfStarterUpdater.exe" % releasedir)
             print("Completed WolfStarterUpdater[One File]")
         print("Building WolfStarterUpdater[Folder]")
-        call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefolder_updater_dist --workpath=./onefolder_updater_build -y -w --onedir updater/WolfStarterUpdater.py")
+        call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefolder_updater_dist --workpath=./onefolder_updater_build -y -w --onedir WolfStarterUpdater.py")
         print("Making updater folder in WolfStarter")
         makedirs("onefolder_dist/WolfStarter/updater/")
         copyfile_z("updater/version.txt","onefolder_dist/WolfStarter/updater/version.txt")
@@ -81,18 +87,20 @@ def main():
         print("Completed Zipping Updater")
     
     print("Removing build data")
+    
     rmtree_z("onefile_dist")
-    rmtree_z("onefile_updater_dist")
-    rmtree_z("onefile_updater_build")
     rmtree_z("onefile_build")
     rmtree_z("onefolder_dist")
-    rmtree_z("onefolder_updater_dist")
     rmtree_z("onefolder_build")
+    rmtree_z("onefolder_updater_dist")
     rmtree_z("onefolder_updater_build")
+    rmtree_z("onefile_updater_dist")
+    rmtree_z("onefile_updater_build")
+    
     print("Build Complete")
 def temp():
     print("Creating temp wolfstarter")
-    call("pyinstaller --icon=WolfStarterLogo.ico --distpath=./onefolder_updater_dist --workpath=./onefolder_updater_build -y -w --onedir updater/WolfStarterUpdater.py")
+    call("pyinstaller --manifest=WolfStarterUpdater.exe.manifest --icon=WolfStarterLogo.ico --distpath=./onefolder_updater_dist --workpath=./onefolder_updater_build -y -w --onedir WolfStarterUpdater.py")
 if __name__ == "__main__":
     main()
     #temp()
