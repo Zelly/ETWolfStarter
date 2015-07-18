@@ -10,14 +10,8 @@ import tkinter.messagebox
 import tkinter.simpledialog
 
 from zelly.serverdata import ServerData
-
-    
+from zelly.constants import *  # @UnusedWildImport
 FONT       = None
-BLACK      = "#000000"
-DARK_GREY  = "#282828"
-GREY       = "#484848"
-LIGHT_GREY = "#E0E0E0"
-WHITE      = "#FFFFFF"
 Config = {
           # WINDOW AND FRAME
           'WINDOW_BACKGROUND'          : WHITE,
@@ -42,35 +36,6 @@ Config = {
           'servers'                    : join(getcwd(), 'servers.json'),
           'launchmod'                  : True,
           }
-
-PLAYER_NAME_LENGTH       = 32
-PLAYER_PING_LENGTH       = 8
-PLAYER_SCORE_LENGTH      = 12
-SERVERSTATUS_TEXT_LENGTH = 54
-HALFLEN = int((SERVERSTATUS_TEXT_LENGTH - 3) / 2)
-HEADERLENGTH = SERVERSTATUS_TEXT_LENGTH - 14
-
-# BUTTON ORDERING
-BUTTON_OPEN     = 0
-BUTTON_SAVE     = 1
-BUTTON_ADD      = 2
-BUTTON_REMOVE   = 3
-BUTTON_JOIN     = 4
-BUTTON_ISSUE    = 5
-BUTTON_DONATE   = 6
-BUTTON_MINIMIZE = 7
-BUTTON_QUIT     = 8
-LABEL_VERSION   = 9
-
-# FRAME ORDER
-# FRAME_WINDOW None - Is entire window
-# FRAME_SERVER None - Is entire window(with padding)
-FRAME_NAVBAR = (0,0)
-FRAME_HEADER = (0,0)
-FRAME_SERVERLIST = (1,0)
-FRAME_SERVERDATA = (2,0)
-FRAME_SERVERSTATUS = (0,1)
-LABEL_NOTICE = (3,0)
 
 def openprocess(command):
     """Opens process without making current application hang"""

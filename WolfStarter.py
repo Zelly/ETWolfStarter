@@ -9,9 +9,8 @@ from os import remove
 from shutil import copyfileobj
 from zipfile import is_zipfile,ZipFile
 from subprocess import Popen
-from sys import exit,argv
-
-WOLFSTARTER_VERSION = "v1.3.0"
+from sys import argv
+from zelly.constants import WOLFSTARTER_VERSION
 
 DELETEZIPLIST=[]
 
@@ -139,11 +138,11 @@ def check_update():
     
 if __name__ == '__main__':
     logfile(argv)
-    if argv and len(argv) > 1 and ( argv[1].lower() == "-n" or argv[1].lower() == "--no-update" ):
+    """if argv and len(argv) > 1 and ( argv[1].lower() == "-n" or argv[1].lower() == "--no-update" ):
         print("Skipping update")
     else:
         check_updater_update()
-        if check_update(): exit(0)
+        if check_update(): exit(0)"""
         
     
     logfile("Program Start")

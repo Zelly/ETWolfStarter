@@ -6,9 +6,8 @@ from subprocess import Popen
 from zipfile import is_zipfile,ZipFile
 from shutil import copyfileobj
 from sys import argv
-
-WOLFSTARTER_VERSION_U = "v1.3.0"
-with open('version.txt','wb') as versionfile: versionfile.write(WOLFSTARTER_VERSION_U.encode())
+from zelly.constants import WOLFSTARTER_VERSION
+with open('version.txt','wb') as versionfile: versionfile.write(WOLFSTARTER_VERSION.encode())
 chdir("/".join( getcwd().replace('\\','/').split('/')[0:-1] ) )
 print(getcwd())
 
