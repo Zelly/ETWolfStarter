@@ -4,20 +4,24 @@ Wolfenstein: Enemy Territory launcher.
 * Add servers to favourites, and see who is on the server.
 * Customize per servers file(a collection of related server favourites) or per server your parameters,paths, and executable.  
   
-![0690b2f3aeb4937e3edf85aa47fc53d5](http://i.gyazo.com/0690b2f3aeb4937e3edf85aa47fc53d5.png)
-## Table of Contents  
+![e520f9ebe590c73cf185b3c44d966954](http://i.gyazo.com/e520f9ebe590c73cf185b3c44d966954.png)  
+  
+### Table of Contents  
 * **[Donate](#donate)**  
 * **[Changes](#changes)**  
 * **[Download](#choosing-a-package-to-download)**  
 * **[The Rest](#the-rest)**  
 * **[Configure](#configuring)**  
 
-## Donate
+### Donate
 <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=45BP8LRVZW7JC&lc=US&item_name=Zelly%20Github%20Donate&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted"><img src="https://cloud.githubusercontent.com/assets/705940/8636137/65b21c0a-2817-11e5-93b1-5cfe64500830.gif" /></a>  
 If you wish to donate I would be grateful, maybe I could buy a new computer!  
 
-## Changes
-### 1.3.0  
+### Changes  
+#### 1.3.1  
+* Removed the updater and replaced with an update link button when update available  
+  
+#### 1.3.0  
 * Added issues button to link to issues page issue #2  
 * Added donate button to link to paypal donate page  
 * Added version to the navbar  
@@ -28,7 +32,7 @@ If you wish to donate I would be grateful, maybe I could buy a new computer!
 * Cleaned up some code while separating frames
 * Improved the builder  
   
-### 1.2.1
+#### 1.2.1
 * Added an automatic updater (testing)
 * Added an icon
 * Added double click server to join
@@ -37,9 +41,9 @@ If you wish to donate I would be grateful, maybe I could buy a new computer!
 * Fixed selecting server columns
 * Fixed the scrolling moving in reverse for the serverlist
 * Lowered the socket timeout to 500ms from 2000ms to speed up things for offline servers
-* Changed default color pattern 
+* Changed default color pattern  
   
-### 1.1.0
+#### 1.1.0
 * Added a sort of error log wrapper. Saves to wolfstarter.log. Look in there if there are unknown issues.
 * Added more color options
 * Added option to disable adding fs_game gamename to startup parameters. **launchmod** in wolfstarter.json
@@ -48,37 +52,37 @@ If you wish to donate I would be grateful, maybe I could buy a new computer!
 * Added a notice label at the bottom telling you you do not need fsbasepath and fshomepath.  
 Also when selecting a server it will tell you all the arguments it is using and in what order.
 * Updated the arrangement of the entry fields to make more sense
-* Updated scrolling in serverlist to synchronize all categories
-
-## Choosing a package to download  
+* Updated scrolling in serverlist to synchronize all categories  
+  
+### Choosing a package to download  
 I have decided to stick with only the zip packaging as it works better in all categories.  
 Check out out the latest release here: https://github.com/Zelly/ETWolfStarter/releases  
   
-## Running ETWolfStarter
+### Running ETWolfStarter
 Both when ran will create a wolfstarter.json this file should always stay in the same directory as the WolfStarter.exe  
-### The Menu
-#### Open...
+#### The Menu
+##### Open...
 Will open a servers json file which contains a list of servers. You won't have one to open on your first run.
-#### Save...
+##### Save...
 By default the first server file will save to servers.json next to your executable. If you want to change this you can select a new area to save here. If you want to save all your silent mod servers in one file you can save your list as silent.json and then for etpro servers save that list as etpro.json.
-#### Quit
+##### Quit
 Saves your server list to the serversfile you have selected with Save...  
 **Warning: If you close the application some other way, your data will not save**  
-#### Minimize
+##### Minimize
 Will minimize the application  
-#### Issue...  
+##### Issue...  
 Will bring you to the github issues page  
-#### Donatebutton...  
+##### Donatebutton...  
 Will bring you to paypal donate page.  
-#### Add
+##### Add
 Will ask you for a unique title and unique IP to a server.  
 After inputted you will see your server added to your list.
-#### Remove
+##### Remove
 You can only see this option when selected on a server. It will delete the server from your list.
-#### Join...
+##### Join...
 Will join the server with the options you have defined for that server.
 
-### The Rest
+#### The Rest
 What you will see when you have added a server is 3 areas(From top to bottom):  
 * **Settings**  
 Contains **fs_basepath**,**fs_homepath**, **et executable path**. These are the settings to be used if a server doesn't have them defined.  

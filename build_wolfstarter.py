@@ -6,7 +6,7 @@ from zipfile import ZipFile,ZIP_DEFLATED
 from zelly.constants import WOLFSTARTER_VERSION
 
 buildOneFile=False
-buildUpdater=True
+buildUpdater=False
 # TODO Write Version text on buil;d
 
 
