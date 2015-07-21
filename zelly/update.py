@@ -17,7 +17,7 @@ class WolfStarterUpdater:
         self.strversion     = ''
         self.version        = 0
         self.updater        = updater
-        self.check()
+        #self.check()
     def check(self):
         logfile("Getting version from %s%s" % ( UPDATE_RAWSRC_URL , self.versionpath ) )
         try:
@@ -53,39 +53,41 @@ class WolfStarterUpdater:
         if int_current_version < self.version:
             self.update()
             return True
-        def update(self):
-            if not isfile("ETWolfStarter-%s.zip" % self.strversion) or not is_zipfile("ETWolfStarter-%s.zip" % self.strversion):
-                url      = "%s%s/ETWolfStarter-%s.zip" % (UPDATE_RELEASE_URL,self.strversion,self.strversion)
-                filename = url.split('/')[-1]
-                try:
-                    with urlopen(url,timeout=1) as response,open(filename,'wb') as outfile:
-                        copyfileobj(response,outfile)
-                except (URLError,HTTPError):
-                    logfile("Could not get update package")
-                    return
-                except OSError:
-                    logfile("Could not write to %s" % filename)
-                    return
-                except timeout:
-                    logfile("Could not contact update server")
-                    return
-            self.markfordeletion(abspath(filename))
-            logfile("Extracting %s update package" % self.strversion)
-            updater_zip=ZipFile("ETWolfStarter-%s.zip" % self.strversion)
-            if self.updater:
-                extractlist=[ v for v in updater_zip.namelist() if 'updater/' in v or v == 'updater' ]
-            else:
-                extractlist=[ v for v in updater_zip.namelist() if not 'updater/' in v and v != 'updater' ]
-            updater_zip.extractall(members=extractlist)
-            updater_zip.close()
-            logfile("Finished extracting update package")
-            if self.updater:
-                openprocess("updater/WolfStarterUpdater.exe")
-            else:
-                self.deleteziplist()
-                openprocess("WolfStarter.exe")
-            exit(0)
-                
+    def update(self):
+        if not isfile("ETWolfStarter-%s.zip" % self.strversion) or not is_zipfile("ETWolfStarter-%s.zip" % self.strversion):
+            url      = "%s%s/ETWolfStarter-%s.zip" % (UPDATE_RELEASE_URL,self.strversion,self.strversion)
+            filename = url.split('/')[-1]
+            try:
+                with urlopen(url,timeout=1) as response,open(filename,'wb') as outfile:
+                    copyfileobj(response,outfile)
+            except (URLError,HTTPError):
+                logfile("Could not get update package")
+                return
+            except OSError:
+                logfile("Could not write to %s" % filename)
+                return
+            except timeout:
+                logfile("Could not contact update server")
+                return
+        self.markfordeletion(abspath(filename))
+        logfile("Extracting %s update package" % self.strversion)
+        updater_zip=ZipFile("ETWolfStarter-%s.zip" % self.strversion)
+        if self.updater:
+            extractlist=[ v for v in updater_zip.namelist() if 'updater/' in v or v == 'updater' ]
+        else:
+            extractlist=[ v for v in updater_zip.namelist() if not 'updater/' in v and v != 'updater' ]
+        updater_zip.extractall(members=extractlist)
+        updater_zip.close()
+        logfile("Finished extracting update package")
+        if self.updater:
+            openprocess("updater/WolfStarterUpdater.exe")
+        else:
+            self.deleteziplist()
+            openprocess("WolfStarter.exe")
+        exit(0)
+    
+    def getreleaseurl(self):
+        return "%s%s/" % ( UPDATE_RELEASE_URL , self.strversion )
     def versiontoint(self,version):
         if isinstance(version,int):
             return version

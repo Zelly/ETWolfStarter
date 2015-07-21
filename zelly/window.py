@@ -8,8 +8,10 @@ import tkinter.font
 import tkinter.messagebox
 import tkinter.simpledialog
 
+from zelly.update import WolfStarterUpdater
 from zelly.serverdata import ServerData
 from zelly.constants import *  # @UnusedWildImport
+
 FONT       = None
 Config = {
           # WINDOW AND FRAME
@@ -101,6 +103,7 @@ class NavBar(Frame):
         self.button_donate   = MenuButton(self , BUTTON_DONATE   , 0 , E , text="Donate..."   , command=self.donate)
         self.button_minimize = MenuButton(self , BUTTON_MINIMIZE , 0 , E , text="Minimize"   , command=self.minimize)
         self.button_quit     = MenuButton(self , BUTTON_QUIT     , 0 , E , text="Quit"       , command=parent.quit)
+        self.button_update   = MenuButton(self , BUTTON_UPDATE   , 0 , E , text="Update"     , command=self.updatelink)
         
         self.versionlabel    = Label(self,
                                      background=Config['BUTTON_BACKGROUND'],
@@ -114,13 +117,20 @@ class NavBar(Frame):
                                      )
         self.versionlabel.grid(column=LABEL_VERSION,row=0,sticky=E)
         self.columnconfigure(BUTTON_ISSUE,weight=1)
-        
+         
         self.button_open.show()
         self.button_saveas.show()
         self.button_issues.show()
         self.button_donate.show()
         self.button_minimize.show()
         self.button_quit.show()
+        def checkupdate():
+            self.Updater = WolfStarterUpdater()
+            if self.Updater.check():
+                self.button_update.show()
+            else:
+                del self.Updater
+        self.after(500, checkupdate)
         
         self.grid(column=FRAME_NAVBAR[0], row=FRAME_NAVBAR[0], sticky=N + W + E + S)
     def minimize(self):
@@ -141,9 +151,17 @@ class NavBar(Frame):
         ok = tkinter.messagebox.askyesno(title="Open donate page", message="Would you like to go to the paypal donate page?",parent=self.parent)
         self.parent.focus_ignore = False
         self.parent.parent.overrideredirect(True)
+        if ok: startfile(r"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=45BP8LRVZW7JC&lc=US&item_name=Zelly%20Github%20Donate&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted")
+    def updatelink(self):
+        print("Opening update dialog")
+        self.parent.parent.overrideredirect(False)
+        self.parent.focus_ignore = True
+        ok = tkinter.messagebox.askyesno(title="Open update download page", message="Would you like to go to the update download page?",parent=self.parent)
+        self.parent.focus_ignore = False
+        self.parent.parent.overrideredirect(True)
         if ok:
-            print("Open page")
-            startfile(r"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=45BP8LRVZW7JC&lc=US&item_name=Zelly%20Github%20Donate&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted")
+            startfile(self.Updater.getreleaseurl())
+            exit(0) # Close because they can't udpate with it open
     
 
 class HeaderFrame(Frame):
@@ -772,7 +790,7 @@ class ServerFrame(Frame):
         else:
             logfile("Could not find filepath")
 class Window(Frame):
-    def __init__(self, *args, **kwargs):
+    def __init__(self , *args, **kwargs):
         global FONT
         self.focus_ignore = False
         self.minimized    = False
