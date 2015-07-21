@@ -2,7 +2,7 @@ from subprocess import Popen
 
 WOLFSTARTER_VERSION = "v1.3.1"
 UPDATE_RAWSRC_URL  = r"https://raw.githubusercontent.com/Zelly/ETWolfStarter/master/"
-UPDATE_RELEASE_URL = r"https://github.com/Zelly/ETWolfStarter/releases/download/"
+UPDATE_RELEASE_URL = r"https://github.com/Zelly/ETWolfStarter/releases/"
 
 BLACK      = "#000000"
 DARK_GREY  = "#282828"
