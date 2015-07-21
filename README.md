@@ -18,6 +18,9 @@ Wolfenstein: Enemy Territory launcher.
 If you wish to donate I would be grateful, maybe I could buy a new computer!  
 
 ### Changes  
+#### 1.3.2  
+* Removed the invalid update code now that there is only a button link  
+  
 #### 1.3.1  
 * Removed the updater and replaced with an update link button when update available  
   
