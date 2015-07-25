@@ -45,8 +45,8 @@ class ServerData:
             Server['laststatus'] = 0
         self.fs_basepath = serversjson['fs_basepath'] if 'fs_basepath' in serversjson else ''
         self.fs_homepath = serversjson['fs_homepath'] if 'fs_homepath' in serversjson else ''
-        self.ETPath = serversjson['ETPath'] if 'ETPath' in serversjson else ''
-        self.parameters = serversjson['parameters'] if 'parameters' in serversjson else ''
+        self.ETPath      = serversjson['ETPath'] if 'ETPath' in serversjson else ''
+        self.parameters  = serversjson['parameters'] if 'parameters' in serversjson else ''
         print("Loaded %d servers" % len(self.Servers))
     def save_serverfile(self,filename):
         if not filename:

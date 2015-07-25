@@ -1,5 +1,5 @@
 import json
-from os import getcwd,startfile
+from os import startfile,getcwd,chdir
 from os.path import isfile, join, isdir
 from re import compile
 from tkinter import *  # @UnusedWildImport
@@ -36,6 +36,9 @@ Config = {
           'BROWSE_A_BUTTON_FOREGROUND' : BLACK,
           'servers'                    : join(getcwd(), 'servers.json'),
           'launchmod'                  : True,
+          'showbasepath'               : False,
+          'showhomepath'               : False,
+          'showcommandline'            : False,
           }
 
 clean_pattern = compile("(\^.)") #(\^[\d\.\w=\-]?)
@@ -104,6 +107,7 @@ class NavBar(Frame):
         self.button_minimize = MenuButton(self , BUTTON_MINIMIZE , 0 , E , text="Minimize"   , command=self.minimize)
         self.button_quit     = MenuButton(self , BUTTON_QUIT     , 0 , E , text="Quit"       , command=parent.quit)
         self.button_update   = MenuButton(self , BUTTON_UPDATE   , 0 , E , text="Update"     , command=self.updatelink)
+        self.button_settings = MenuButton(self , BUTTON_SETTINGS , 0 , E , text="Settings"   , command=self.settings)
         
         self.versionlabel    = Label(self,
                                      background=Config['BUTTON_BACKGROUND'],
@@ -116,14 +120,17 @@ class NavBar(Frame):
                                      text=WOLFSTARTER_VERSION
                                      )
         self.versionlabel.grid(column=LABEL_VERSION,row=0,sticky=E)
-        self.columnconfigure(BUTTON_ISSUE,weight=1)
-         
+        self.columnconfigure(BUTTON_SETTINGS,weight=1)
+        
+        
         self.button_open.show()
         self.button_saveas.show()
+        self.button_settings.show()
         self.button_issues.show()
         self.button_donate.show()
         self.button_minimize.show()
         self.button_quit.show()
+        
         def checkupdate():
             self.Updater = WolfStarterUpdater()
             if self.Updater.check():
@@ -162,6 +169,9 @@ class NavBar(Frame):
         if ok:
             startfile(self.Updater.getreleaseurl())
             exit(0) # Close because they can't udpate with it open
+    def settings(self):
+        self.parent.serversframe.closewindow()
+        Settings(self.parent)
     
 
 class HeaderFrame(Frame):
@@ -189,10 +199,11 @@ class HeaderFrame(Frame):
         self.fs_basepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_basepath_var)
         self.fs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.fs_basepath_var, self.updateconfig))
         
-        self.fs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.updateconfig)
-        self.fs_basepath_label.grid(  row=1 , column=0 , sticky=N + W)
-        self.fs_basepath_entry.grid(  row=1 , column=1 , sticky=N + W + E)
-        self.fs_basepath_browse.grid( row=1 , column=2 , sticky=N + E)
+        if Config['showbasepath']:
+            self.fs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.updateconfig)
+            self.fs_basepath_label.grid(  row=1 , column=0 , sticky=N + W)
+            self.fs_basepath_entry.grid(  row=1 , column=1 , sticky=N + W + E)
+            self.fs_basepath_browse.grid( row=1 , column=2 , sticky=N + E)
         
         # Global fs_homepath
         self.fs_homepath_var    = StringVar()
@@ -200,10 +211,11 @@ class HeaderFrame(Frame):
         self.fs_homepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_homepath_var)
         self.fs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.fs_homepath_var, self.updateconfig))
         
-        self.fs_homepath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
-        self.fs_homepath_label.grid(  row=2 , column=0 , sticky=N + W)
-        self.fs_homepath_entry.grid(  row=2 , column=1 , sticky=N + W + E)
-        self.fs_homepath_browse.grid( row=2 , column=2 , sticky=N + E)
+        if Config['showhomepath']:
+            self.fs_homepath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
+            self.fs_homepath_label.grid(  row=2 , column=0 , sticky=N + W)
+            self.fs_homepath_entry.grid(  row=2 , column=1 , sticky=N + W + E)
+            self.fs_homepath_browse.grid( row=2 , column=2 , sticky=N + E)
         
         # Global Parameters
         self.parameters_var = StringVar()
@@ -214,10 +226,10 @@ class HeaderFrame(Frame):
         self.parameters_label.grid(row=3, column=0, sticky=N + W)
         self.parameters_entry.grid(row=3, column=1, sticky=N + W + E)
         
-        if self.ServerFrame.parent.serverdata.fs_basepath: self.fs_basepath_var.set(self.ServerFrame.parent.serverdata.fs_basepath)
-        if self.ServerFrame.parent.serverdata.fs_homepath: self.fs_homepath_var.set(self.ServerFrame.parent.serverdata.fs_homepath)
-        if self.ServerFrame.parent.serverdata.parameters: self.parameters_var.set(self.ServerFrame.parent.serverdata.parameters)
-        if self.ServerFrame.parent.serverdata.ETPath: self.etpath_var.set(self.ServerFrame.parent.serverdata.ETPath)
+        if self.ServerFrame.parent.serverdata.fs_basepath != None: self.fs_basepath_var.set(self.ServerFrame.parent.serverdata.fs_basepath)
+        if self.ServerFrame.parent.serverdata.fs_homepath != None: self.fs_homepath_var.set(self.ServerFrame.parent.serverdata.fs_homepath)
+        if self.ServerFrame.parent.serverdata.parameters != None: self.parameters_var.set(self.ServerFrame.parent.serverdata.parameters)
+        if self.ServerFrame.parent.serverdata.ETPath != None: self.etpath_var.set(self.ServerFrame.parent.serverdata.ETPath)
         
         self.grid_columnconfigure(1, minsize=400)
     def show(self):
@@ -225,10 +237,10 @@ class HeaderFrame(Frame):
     def hide(self):
         self.grid_forget()
     def updateconfig(self, e):
-        if self.fs_basepath_var.get() and isdir(self.fs_basepath_var.get()): self.ServerFrame.parent.serverdata.fs_basepath = self.fs_basepath_var.get()
-        if self.fs_homepath_var.get() and isdir(self.fs_homepath_var.get()): self.ServerFrame.parent.serverdata.fs_homepath = self.fs_homepath_var.get()
-        if self.etpath_var.get() and isfile(self.etpath_var.get()): self.ServerFrame.parent.serverdata.ETPath = self.etpath_var.get()
-        if self.parameters_var.get(): self.ServerFrame.parent.serverdata.parameters = self.parameters_var.get()
+        if self.fs_basepath_var.get() != None: self.ServerFrame.parent.serverdata.fs_basepath = self.fs_basepath_var.get()
+        if self.fs_homepath_var.get() != None: self.ServerFrame.parent.serverdata.fs_homepath = self.fs_homepath_var.get()
+        if self.etpath_var.get() != None: self.ServerFrame.parent.serverdata.ETPath = self.etpath_var.get()
+        if self.parameters_var.get() != None: self.ServerFrame.parent.serverdata.parameters = self.parameters_var.get()
 
 class ServerListFrame(Frame):
     """Contains the server list"""
@@ -369,8 +381,13 @@ class ServerListFrame(Frame):
         self.ServerFrame.button_removeserver.show()
         self.ServerFrame.serverstatus()
 
-        command_line = self.ServerFrame.getcommandline(selectid)
-        if command_line: self.ServerFrame.NoticeLabel.set(command_line.replace('+','\n+'))
+        command_info = self.ServerFrame.getcommandline(selectid)
+        if command_info and command_info[0]:
+            self.ServerFrame.NoticeLabel.set(command_info[0].replace('+','\n+'))
+            if Config['showcommandline']:
+                self.ServerFrame.NoticeLabel.show()
+            else:
+                self.ServerFrame.NoticeLabel.hide()
 
 class ServerDataFrame(Frame):
     """Frame contains all server related frames"""
@@ -385,7 +402,7 @@ class ServerDataFrame(Frame):
         self.servertitle_label = Label(self, text="Title: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.servertitle_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.servertitle_var)
         
-        self.servertitle_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
+        self.servertitle_entry.bind( sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
         self.servertitle_label.grid( row=0, column=0, sticky=N + W)
         self.servertitle_entry.grid( row=0, column=1, sticky=N + W + E)
         
@@ -394,14 +411,14 @@ class ServerDataFrame(Frame):
         self.serverpassword_label = Label(self, text="Password: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serverpassword_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverpassword_var)
         
-        self.serverpassword_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
+        self.serverpassword_entry.bind( sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
         
         # Server address
         self.serveraddress_var   = StringVar()
         self.serveraddress_label = Label(self, text="Address: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serveraddress_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveraddress_var)
         
-        self.serveraddress_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
+        self.serveraddress_entry.bind( sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
         self.serveraddress_label.grid( row=2, column=0, sticky=N + W)
         self.serveraddress_entry.grid( row=2, column=1, sticky=N + W + E)
         
@@ -411,7 +428,7 @@ class ServerDataFrame(Frame):
         self.serveretpath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveretpath_var)
         self.serveretpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getfilepath(self.serveretpath_var, self.updateserver))
         
-        self.serveretpath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
+        self.serveretpath_entry.bind(  sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
         self.serveretpath_label.grid(  row=3, column=0, sticky=N + W)
         self.serveretpath_entry.grid(  row=3, column=1, sticky=N + W + E)
         self.serveretpath_browse.grid( row=3, column=2, sticky=N + E)
@@ -422,10 +439,11 @@ class ServerDataFrame(Frame):
         self.serverfs_basepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_basepath_var)
         self.serverfs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.serverfs_basepath_var, self.updateserver))
         
-        self.serverfs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
-        self.serverfs_basepath_label.grid(  row=4, column=0, sticky=N + W)
-        self.serverfs_basepath_entry.grid(  row=4, column=1, sticky=N + W + E)
-        self.serverfs_basepath_browse.grid( row=4, column=2, sticky=N + E)
+        if Config['showbasepath']:
+            self.serverfs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+            self.serverfs_basepath_label.grid(  row=4, column=0, sticky=N + W)
+            self.serverfs_basepath_entry.grid(  row=4, column=1, sticky=N + W + E)
+            self.serverfs_basepath_browse.grid( row=4, column=2, sticky=N + E)
         
         # Server fs_homepath
         self.serverfs_homepath_var    = StringVar()
@@ -433,17 +451,18 @@ class ServerDataFrame(Frame):
         self.serverfs_homepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_homepath_var)
         self.serverfs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.serverfs_homepath_var, self.updateserver))
         
-        self.serverfs_homepath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
-        self.serverfs_homepath_label.grid(  row=5, column=0, sticky=N + W)
-        self.serverfs_homepath_entry.grid(  row=5, column=1, sticky=N + W + E)
-        self.serverfs_homepath_browse.grid( row=5, column=2, sticky=N + E)
+        if Config['showhomepath']:
+            self.serverfs_homepath_entry.bind(  sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+            self.serverfs_homepath_label.grid(  row=5, column=0, sticky=N + W)
+            self.serverfs_homepath_entry.grid(  row=5, column=1, sticky=N + W + E)
+            self.serverfs_homepath_browse.grid( row=5, column=2, sticky=N + E)
         
         # Server extra parameters
         self.serverparams_var   = StringVar()
         self.serverparams_label = Label(self, text="Parameters: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serverparams_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverparams_var)
         
-        self.serverparams_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
+        self.serverparams_entry.bind( sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
         self.serverparams_label.grid( row=6, column=0, sticky=N + W)
         self.serverparams_entry.grid( row=6, column=1, sticky=N + W + E)
         self.grid_columnconfigure(1, minsize=400)
@@ -469,13 +488,13 @@ class ServerDataFrame(Frame):
         self.show()
     def updateserver(self,Server=None):
         if not Server: return
-        if self.servertitle_var.get(): Server['title'] = self.servertitle_var.get()
-        if self.serveraddress_var.get(): Server['address'] = self.serveraddress_var.get()
-        if self.serverpassword_var.get(): Server['password'] = self.serverpassword_var.get()
-        if self.serverparams_var.get(): Server['parameters'] = self.serverparams_var.get()
-        if self.serverfs_basepath_var.get() and isdir(self.serverfs_basepath_var.get()): Server['fs_basepath'] = self.serverfs_basepath_var.get()
-        if self.serverfs_homepath_var.get() and isdir(self.serverfs_homepath_var.get()): Server['fs_homepath'] = self.serverfs_homepath_var.get()
-        if self.serveretpath_var.get() and isfile(self.serveretpath_var.get()): Server['ETPath'] = self.serveretpath_var.get()
+        if self.servertitle_var.get() != None: Server['title'] = self.servertitle_var.get()
+        if self.serveraddress_var.get() != None: Server['address'] = self.serveraddress_var.get()
+        if self.serverpassword_var.get() != None: Server['password'] = self.serverpassword_var.get()
+        if self.serverparams_var.get() != None: Server['parameters'] = self.serverparams_var.get()
+        if self.serverfs_basepath_var.get() != None and isdir(self.serverfs_basepath_var.get()): Server['fs_basepath'] = self.serverfs_basepath_var.get()
+        if self.serverfs_homepath_var.get() != None and isdir(self.serverfs_homepath_var.get()): Server['fs_homepath'] = self.serverfs_homepath_var.get()
+        if self.serveretpath_var.get() != None and isfile(self.serveretpath_var.get()): Server['ETPath'] = self.serveretpath_var.get()
     def clear(self):
         self.servertitle_var.set('')
         self.serveraddress_var.set('')
@@ -541,7 +560,7 @@ class NoticeLabel(Label):
         
         self.config(font=FONT,background=Config['WINDOW_BACKGROUND'],textvariable=self.textvar)
         
-        self.show()
+        #self.show()
     def set(self,message=""):
         self.textvar.set(message)
     def show(self):
@@ -625,67 +644,88 @@ class ServerFrame(Frame):
         parameters  = ''
         address     = Server['address']
         password    = Server['password']
+        
+        # Check ET Path
+        # This entry is required
+        # If not exist then return None for command line
         if Server['ETPath']:
             etpath = Server['ETPath']
         else:
             etpath = self.parent.serverdata.ETPath
+        if not isfile(etpath): return None
+        
+        # Check for fs_basepath
+        # This entry is not required
+        # If not exist then do not add it to line ?
         if Server['fs_basepath']:
             fs_basepath = Server['fs_basepath']
         else:
             fs_basepath = self.parent.serverdata.fs_basepath
+        if not isdir(fs_basepath): fs_basepath = '' #will this work? or will it just default to wolfstarter directory
+        #if not fs_basepath: fs_basepath = "/".join(etpath.replace('\\', '/').split("/")[0:-1])
+        
+        # Check for fs_homepath
+        # This entry is not required
+        # If not exist then do not add to line ?
         if Server['fs_homepath']:
             fs_homepath = Server['fs_homepath']
         else:
             fs_homepath = self.parent.serverdata.fs_homepath
+        if not isdir(fs_homepath): fs_homepath = ''
+        #if not fs_homepath: fs_homepath = fs_basepath
         
-        if self.parent.serverdata.parameters:
-            parameters = self.parent.serverdata.parameters
+        # Paramaters are extra parameters like exec configs or something.
+        if self.parent.serverdata.parameters: parameters = self.parent.serverdata.parameters
         if Server['parameters']:
-            if parameters:
-                parameters += ' '
+            if parameters: parameters += ' '
             parameters += Server['parameters']
         
-        if not fs_basepath:
-            fs_basepath = "/".join(etpath.replace('\\', '/').split("/")[0:-1])
-        if not fs_homepath:
-            fs_homepath = fs_basepath
             
         if Config['launchmod']:
-            if "gamename" in Server['cvar']:
-                fs_game = Server['cvar']['gamename']
-            if not isdir(join(fs_basepath,fs_game)):
-                logfile("Mod path doesn't exist")
-                fs_game='etmain'
-                
+            if "gamename" in Server['cvar']: fs_game = Server['cvar']['gamename']
+            if fs_basepath:
+                if not isdir(join(fs_basepath,fs_game)):
+                    logfile("Mod path does not exist in basepath")
+                    fs_game = "etmain"
+            else:
+                etpathdir = "/".join(etpath.replace('\\', '/').split("/")[0:-1])
+                if not isdir(join(etpathdir,fs_game)):
+                    logfile("Mod path does not exist in et path")
+                    fs_game = "etmain"
+        
         if not address:
             logfile("Address not valid")
             return
         if not isfile(etpath):
             logfile("ET Executable is not valid")
             return
-        if not isdir(fs_basepath):
-            logfile("fs_basepath is not valid")
-            return
-        if not isdir(fs_homepath):
-            logfile("fs_homepath is not valid")
-            return
         
-        command_line = "\"%s\" +set fs_basepath \"%s\" +set fs_homepath \"%s\" +set fs_game %s" % (etpath , fs_basepath , fs_homepath , fs_game)
-        if parameters:
-            command_line += ' ' + parameters
-        if password and "g_needpass" in Server['cvar'] and int(Server['cvar']['g_needpass']) == 1:
-            command_line += ' +set password ' + password
-        command_line += ' +connect ' + address
+        commandline = "\"%s\"" % etpath
+        if fs_basepath and isdir(fs_basepath): commandline += " +set fs_basepath \"%s\"" % fs_basepath
+        if fs_homepath and isdir(fs_homepath): commandline += " +set fs_homepath \"%s\"" % fs_homepath
+        if fs_game and fs_game != "etmain": commandline += " +set fs_game %s" % fs_game
+        
+        if parameters: commandline += ' ' + parameters
+        
+        if password and "g_needpass" in Server['cvar'] and int(Server['cvar']['g_needpass']) == 1: commandline += ' +set password ' + password
+        commandline += ' +connect ' + address
+        
         # End command line generate #
-        logfile(command_line)
-        return command_line
+        
+        logfile(commandline)
+        return (commandline,"/".join(etpath.replace('\\', '/').split("/")[0:-1]))
     def joinserver(self,e=None):
         selectid = self.ServerListFrame.get()
         if selectid == None: return
-        command_line = self.getcommandline(selectid)
-        if not command_line: return
+        command_info = self.getcommandline(selectid)
+        if not command_info or not command_info[0] or not command_info[1]: return
+        cwd = getcwd()
+        logfile("Changing directory to %s" % command_info[1])
+        chdir(command_info[1])
         logfile("Joining server %s" % selectid)
-        openprocess(command_line)
+        openprocess(command_info[0])
+        logfile("Returning directory to %s" % cwd)
+        chdir(cwd)
     def serverstatus(self, selectid=None):
         specificserver = False
         if selectid == None:
@@ -789,6 +829,68 @@ class ServerFrame(Frame):
             updatemethod(self)
         else:
             logfile("Could not find filepath")
+    def closewindow(self):
+        for child in self.winfo_children(): child.destroy()
+        self.destroy()
+
+class SettingCheckButton(Checkbutton):
+    def __init__(self, master=None, labeltext=None,row=0, cnf={}, **kw):
+        Checkbutton.__init__(self, master, cnf, **kw)
+        
+        self.parent = master
+        
+        self.var = IntVar()
+        
+        self.config(variable=self.var,background=Config['WINDOW_BACKGROUND'])
+        self.label = Label(self.parent,text=labeltext,background=Config['WINDOW_BACKGROUND'])
+        self.label.grid(row=row,column=0,sticky=W)
+        
+        self.grid(row=row,column=1,sticky=W)
+    def get(self):
+        if self.var.get() == 1:
+            return True
+        else:
+            return False
+
+class Settings(Frame):
+    """Frame contains all server related frames"""
+    def __init__(self, parent, *args, **kwargs):
+        Frame.__init__(self, parent, *args, **kwargs)
+        
+        self.parent = parent
+        
+        self.config(background=Config['WINDOW_BACKGROUND'], padx=5, pady=5)
+        
+        self.label_info = Label(self,text="The color options are only editable in wolfstarter.json",background=Config['WINDOW_BACKGROUND'])
+        self.label_info.grid(sticky=W)
+        
+        self.launchmod = SettingCheckButton(self,"Launches ET with the mod of the server instead of etmain",1)
+        self.basepath  = SettingCheckButton(self,"Show the basepath text entry",2)
+        self.homepath  = SettingCheckButton(self,"Show the homepath text entry",3)
+        self.command   = SettingCheckButton(self,"Show the full command line text that will be sent to et executable",4)
+        
+        self.savebutton = MenuButton(self,0,5,text="save",command=self.closewindow)
+        self.savebutton.show()
+        
+        if Config['launchmod']: self.launchmod.toggle()
+        if Config['showbasepath']: self.basepath.toggle()
+        if Config['showhomepath']: self.homepath.toggle()
+        if Config['showcommandline']: self.command.toggle()
+        
+        self.grid()
+    def closewindow(self):
+        Config['launchmod']       = self.launchmod.get()
+        Config['showbasepath']    = self.basepath.get()
+        Config['showhomepath']    = self.homepath.get()
+        Config['showcommandline'] = self.command.get()
+        
+        self.parent.save_config()
+        for child in self.winfo_children(): child.destroy()
+        self.parent.serverdata   = ServerData()
+        self.parent.serverdata.load_serverfile(Config['servers'])
+        self.parent.serversframe = ServerFrame(self.parent)
+        self.destroy()
+
 class Window(Frame):
     def __init__(self , *args, **kwargs):
         global FONT
@@ -836,8 +938,7 @@ class Window(Frame):
         if not isfile(join(getcwd() , 'wolfstarter.json')):
             logfile("Config not found using default")
         else:
-            with open(join(getcwd() , 'wolfstarter.json')) as configfile:
-                jsondata = json.load(configfile)
+            with open(join(getcwd() , 'wolfstarter.json')) as configfile: jsondata = json.load(configfile)
             if jsondata:
                 for key in jsondata:
                     if key in Config:
