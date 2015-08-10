@@ -39,6 +39,7 @@ Config = {
           'showbasepath'               : False,
           'showhomepath'               : False,
           'showcommandline'            : False,
+          'windowborder'               : False,
           }
 
 clean_pattern = compile("(\^.)") #(\^[\d\.\w=\-]?)
@@ -62,7 +63,7 @@ class MenuButton(Button):
                     activeforeground=Config['A_BUTTON_FOREGROUND'],
                     borderwidth=0,
                     width=5,
-                    height=2,
+                    height=1,
                     relief="flat",
                     padx=12,
                     cursor="hand2",
@@ -108,14 +109,14 @@ class NavBar(Frame):
         self.button_quit     = MenuButton(self , BUTTON_QUIT     , 0 , E , text="Quit"       , command=parent.quit)
         self.button_update   = MenuButton(self , BUTTON_UPDATE   , 0 , E , text="Update"     , command=self.updatelink)
         self.button_settings = MenuButton(self , BUTTON_SETTINGS , 0 , E , text="Settings"   , command=self.settings)
-        
+        self.button_logwin   = MenuButton(self , BUTTON_TEST     , 0 , E , text="LogWindow"  , command=self.logwindow)
         self.versionlabel    = Label(self,
                                      background=Config['BUTTON_BACKGROUND'],
                                      foreground=Config['BUTTON_FOREGROUND'],
                                      relief="flat",
                                      borderwidth=0,
                                      width=5,
-                                     height=2,
+                                     height=1,
                                      padx=12,
                                      text=WOLFSTARTER_VERSION
                                      )
@@ -130,7 +131,7 @@ class NavBar(Frame):
         self.button_donate.show()
         self.button_minimize.show()
         self.button_quit.show()
-        
+        #self.button_logwin.show()
         def checkupdate():
             self.Updater = WolfStarterUpdater()
             if self.Updater.check():
@@ -140,6 +141,8 @@ class NavBar(Frame):
         self.after(500, checkupdate)
         
         self.grid(column=FRAME_NAVBAR[0], row=FRAME_NAVBAR[0], sticky=N + W + E + S)
+    def logwindow(self):
+        LogWindow(self.parent.parent,"There was an error while joining, please review the last few entrys of the logfile.")
     def minimize(self):
         self.parent.minimized = True
         self.parent.parent.overrideredirect(False)
@@ -340,6 +343,11 @@ class ServerListFrame(Frame):
         self.serverping.insert(END    , Server['ping'])
     def select(self,selectid=None):
         if selectid == None: return
+        self.servers.select_clear(0, END)
+        self.servermap.select_clear(0, END)
+        self.serverplayers.select_clear(0, END)
+        self.serverping.select_clear(0, END)
+        
         self.servers.select_set(selectid)
         self.servermap.select_set(selectid)
         self.serverplayers.select_set(selectid)
@@ -402,7 +410,7 @@ class ServerDataFrame(Frame):
         self.servertitle_label = Label(self, text="Title: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.servertitle_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.servertitle_var)
         
-        self.servertitle_entry.bind( sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+        self.servertitle_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         self.servertitle_label.grid( row=0, column=0, sticky=N + W)
         self.servertitle_entry.grid( row=0, column=1, sticky=N + W + E)
         
@@ -411,14 +419,14 @@ class ServerDataFrame(Frame):
         self.serverpassword_label = Label(self, text="Password: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serverpassword_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverpassword_var)
         
-        self.serverpassword_entry.bind( sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+        self.serverpassword_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         
         # Server address
         self.serveraddress_var   = StringVar()
         self.serveraddress_label = Label(self, text="Address: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serveraddress_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveraddress_var)
         
-        self.serveraddress_entry.bind( sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+        self.serveraddress_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         self.serveraddress_label.grid( row=2, column=0, sticky=N + W)
         self.serveraddress_entry.grid( row=2, column=1, sticky=N + W + E)
         
@@ -428,7 +436,7 @@ class ServerDataFrame(Frame):
         self.serveretpath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveretpath_var)
         self.serveretpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getfilepath(self.serveretpath_var, self.updateserver))
         
-        self.serveretpath_entry.bind(  sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+        self.serveretpath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
         self.serveretpath_label.grid(  row=3, column=0, sticky=N + W)
         self.serveretpath_entry.grid(  row=3, column=1, sticky=N + W + E)
         self.serveretpath_browse.grid( row=3, column=2, sticky=N + E)
@@ -440,7 +448,7 @@ class ServerDataFrame(Frame):
         self.serverfs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.serverfs_basepath_var, self.updateserver))
         
         if Config['showbasepath']:
-            self.serverfs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+            self.serverfs_basepath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
             self.serverfs_basepath_label.grid(  row=4, column=0, sticky=N + W)
             self.serverfs_basepath_entry.grid(  row=4, column=1, sticky=N + W + E)
             self.serverfs_basepath_browse.grid( row=4, column=2, sticky=N + E)
@@ -452,7 +460,7 @@ class ServerDataFrame(Frame):
         self.serverfs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.serverfs_homepath_var, self.updateserver))
         
         if Config['showhomepath']:
-            self.serverfs_homepath_entry.bind(  sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+            self.serverfs_homepath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
             self.serverfs_homepath_label.grid(  row=5, column=0, sticky=N + W)
             self.serverfs_homepath_entry.grid(  row=5, column=1, sticky=N + W + E)
             self.serverfs_homepath_browse.grid( row=5, column=2, sticky=N + E)
@@ -462,7 +470,7 @@ class ServerDataFrame(Frame):
         self.serverparams_label = Label(self, text="Parameters: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
         self.serverparams_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverparams_var)
         
-        self.serverparams_entry.bind( sequence='<KeyRelease>', func=self.ServerFrame.updateserver)
+        self.serverparams_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         self.serverparams_label.grid( row=6, column=0, sticky=N + W)
         self.serverparams_entry.grid( row=6, column=1, sticky=N + W + E)
         self.grid_columnconfigure(1, minsize=400)
@@ -486,15 +494,23 @@ class ServerDataFrame(Frame):
         self.serverfs_homepath_var.set(Server['fs_homepath'])
         self.serveretpath_var.set(Server['ETPath'])
         self.show()
-    def updateserver(self,Server=None):
-        if not Server: return
+    def updateserver(self, e):
+        selectid = self.ServerFrame.ServerListFrame.get()
+        if selectid == None: return
+        Server = self.ServerFrame.parent.serverdata.Servers[selectid]
+        if not Server:
+            logfile("Error updating server status %d" % selectid)
+            return
+        logfile("Updating %s at %d" % ( Server['title'] , selectid ) )
+        
         if self.servertitle_var.get() != None: Server['title'] = self.servertitle_var.get()
         if self.serveraddress_var.get() != None: Server['address'] = self.serveraddress_var.get()
         if self.serverpassword_var.get() != None: Server['password'] = self.serverpassword_var.get()
         if self.serverparams_var.get() != None: Server['parameters'] = self.serverparams_var.get()
-        if self.serverfs_basepath_var.get() != None and isdir(self.serverfs_basepath_var.get()): Server['fs_basepath'] = self.serverfs_basepath_var.get()
-        if self.serverfs_homepath_var.get() != None and isdir(self.serverfs_homepath_var.get()): Server['fs_homepath'] = self.serverfs_homepath_var.get()
-        if self.serveretpath_var.get() != None and isfile(self.serveretpath_var.get()): Server['ETPath'] = self.serveretpath_var.get()
+        if self.serverfs_basepath_var.get() != None: Server['fs_basepath'] = self.serverfs_basepath_var.get()
+        if self.serverfs_homepath_var.get() != None: Server['fs_homepath'] = self.serverfs_homepath_var.get()
+        if self.serveretpath_var.get() != None: Server['ETPath'] = self.serveretpath_var.get()
+        self.ServerFrame.refresh_list(selectid)
     def clear(self):
         self.servertitle_var.set('')
         self.serveraddress_var.set('')
@@ -567,6 +583,7 @@ class NoticeLabel(Label):
         self.grid(row=LABEL_NOTICE[0], column=LABEL_NOTICE[1], sticky=N + W,rowspan=2)
     def hide(self):
         self.grid_forget()
+
 class ServerFrame(Frame):
     """Frame contains all server related frames"""
     def __init__(self, parent, *args, **kwargs):
@@ -652,7 +669,9 @@ class ServerFrame(Frame):
             etpath = Server['ETPath']
         else:
             etpath = self.parent.serverdata.ETPath
-        if not isfile(etpath): return None
+        if not isfile(etpath):
+            logfile("ET Path is not valid file")
+            return None
         
         # Check for fs_basepath
         # This entry is not required
@@ -718,7 +737,9 @@ class ServerFrame(Frame):
         selectid = self.ServerListFrame.get()
         if selectid == None: return
         command_info = self.getcommandline(selectid)
-        if not command_info or not command_info[0] or not command_info[1]: return
+        if not command_info or not command_info[0] or not command_info[1]:
+            LogWindow(self.parent.parent,"There was with your configuration. This error log should tell you what went wrong.")
+            return
         cwd = getcwd()
         logfile("Changing directory to %s" % command_info[1])
         chdir(command_info[1])
@@ -732,6 +753,9 @@ class ServerFrame(Frame):
             selectid = self.ServerListFrame.get()
         else:
             specificserver = True
+        if not specificserver:
+            self.ServerStatusFrame.clear()
+            self.ServerStatusFrame.hide()
         if selectid == None: return
         
         Server = self.parent.serverdata.Servers[selectid]
@@ -749,7 +773,6 @@ class ServerFrame(Frame):
             return
         
         if not specificserver:
-            self.ServerStatusFrame.clear()
             if "sv_hostname" in Server['cvar']:
                 self.ServerStatusFrame.insertline("%s : %s" % ( "Server Name".ljust(11) , cleanstr(Server['cvar']['sv_hostname']).ljust(HEADERLENGTH) ) )
             if "mapname" in Server['cvar']:
@@ -786,18 +809,6 @@ class ServerFrame(Frame):
             else:
                 self.ServerDataFrame.hidepassword()
             self.ServerStatusFrame.show()
-    # Events
-    def updateserver(self, e):
-        selectid = self.ServerListFrame.get()
-        if selectid == None: return
-        Server = self.parent.serverdata.Servers[selectid]
-        if not Server:
-            logfile("Error updating server status %d" % selectid)
-            return
-        logfile("Updating %s at %d" % ( Server['title'] , selectid ) )
-        
-        self.ServerDataFrame.updateserver(Server)
-        self.refresh_list(selectid)
     # Methods
     def getpath(self, browse_var=None, updatemethod=None):
         if not browse_var: return
@@ -830,6 +841,10 @@ class ServerFrame(Frame):
         else:
             logfile("Could not find filepath")
     def closewindow(self):
+        
+        self.button_addserver.destroy()
+        self.button_removeserver.destroy()
+        self.button_joinserver.destroy()
         for child in self.winfo_children(): child.destroy()
         self.destroy()
 
@@ -851,7 +866,30 @@ class SettingCheckButton(Checkbutton):
             return True
         else:
             return False
-
+class LogWindow(Toplevel):
+    def __init__(self, parent=None,labeltext="", cnf={}, **kw):
+        Toplevel.__init__(self, parent, cnf,**kw)
+        self.parent = parent
+        self.config(background=Config['WINDOW_BACKGROUND'],padx=5,pady=5)
+        self.title("Log Window")
+        
+        if labeltext:
+            self.label = Label(self,text=labeltext,background="#000000",foreground="#FF0000")
+            self.label.grid(row=0,column=0,columnspan=2)
+        
+        self.textbox   = Text(self,width=115,height=47)
+        
+        self.text_scroll = Scrollbar(self, command=self.textbox.yview, background=Config['BUTTON_BACKGROUND'])
+        self.textbox.config(yscrollcommand=self.text_scroll.set)
+        self.text_scroll.grid(row=1, column=1, sticky="nse")
+        
+        with open('wolfstarter.log') as myfile:
+            logdata=myfile.read()
+        
+        self.textbox.insert(END, logdata)
+        self.textbox.yview(END)
+        self.textbox.grid(row=1,column=0,sticky="W")
+        self.grid()
 class Settings(Frame):
     """Frame contains all server related frames"""
     def __init__(self, parent, *args, **kwargs):
@@ -868,14 +906,16 @@ class Settings(Frame):
         self.basepath  = SettingCheckButton(self,"Show the basepath text entry",2)
         self.homepath  = SettingCheckButton(self,"Show the homepath text entry",3)
         self.command   = SettingCheckButton(self,"Show the full command line text that will be sent to et executable",4)
+        self.windowborder = SettingCheckButton(self,"Show the Windows's window border at all times",5)
         
-        self.savebutton = MenuButton(self,0,5,text="save",command=self.closewindow)
+        self.savebutton = MenuButton(self,0,6,text="save",command=self.closewindow)
         self.savebutton.show()
         
         if Config['launchmod']: self.launchmod.toggle()
         if Config['showbasepath']: self.basepath.toggle()
         if Config['showhomepath']: self.homepath.toggle()
         if Config['showcommandline']: self.command.toggle()
+        if Config['windowborder']: self.windowborder.toggle()
         
         self.grid()
     def closewindow(self):
@@ -883,12 +923,19 @@ class Settings(Frame):
         Config['showbasepath']    = self.basepath.get()
         Config['showhomepath']    = self.homepath.get()
         Config['showcommandline'] = self.command.get()
+        Config['windowborder']    = self.windowborder.get()
         
         self.parent.save_config()
         for child in self.winfo_children(): child.destroy()
         self.parent.serverdata   = ServerData()
         self.parent.serverdata.load_serverfile(Config['servers'])
         self.parent.serversframe = ServerFrame(self.parent)
+        
+        if self.windowborder.get():
+            self.parent.parent.overrideredirect(False)
+        else:
+            self.parent.parent.overrideredirect(True)
+        
         self.destroy()
 
 class Window(Frame):
@@ -916,8 +963,8 @@ class Window(Frame):
         self.navbar.bind("<B1-Motion>"       , self.OnMotion)
         # self.parent.bind("<FocusIn>"         , self.OnFocus)
         # self.parent.bind("<FocusOut>"        , self.OnLostFocus)
-        
-        self.parent.overrideredirect(True)
+        if not Config['windowborder']:
+            self.parent.overrideredirect(True)
         self.parent.config(background=Config['WINDOW_BORDER'], padx=5, pady=5)  # Set padding and background color
         self.parent.title("WolfStarter by Zelly")
         self.parent.bind("<FocusIn>"         , self.OnFocus)
@@ -1008,17 +1055,19 @@ class Window(Frame):
         y = self.parent.winfo_y() + deltay
         self.parent.geometry("+%s+%s" % (x, y))
     def OnFocus(self, event):
+        if Config['windowborder']: return # Ignore window focus events
         if self.minimized or self.focus_ignore: return
         w=self.parent.focus_get()
         if w:
             self.parent.overrideredirect(True)
             w.focus_force()
     def OnLostFocus(self, event):
+        if Config['windowborder']: return # Ignore window focus events
         if self.minimized or self.focus_ignore: return
-        if not self.parent.focus_get():
-            self.parent.overrideredirect(False)
+        if not self.parent.focus_get(): self.parent.overrideredirect(False)
         
     def OnConfigure(self,event):
+        if Config['windowborder']: return # Ignore window focus events
         if self.minimized and not self.parent.focus_get(): # If minimized, and window does not have focus and there is a new event.
             # Is most likely that the event is a maximize event, however the window isn't maximized until after this event.
             def task():

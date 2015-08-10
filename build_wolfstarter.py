@@ -7,7 +7,7 @@ from zelly.constants import WOLFSTARTER_VERSION
 
 buildOneFile=False
 buildUpdater=False
-# TODO Write Version text on buil;d
+# TODO Write Version text on build
 
 
 def zipdir(path,zippath,mode="w",extradir=None):
