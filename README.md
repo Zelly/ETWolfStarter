@@ -4,7 +4,7 @@ Wolfenstein: Enemy Territory launcher.
 * Add servers to favourites, and see who is on the server.
 * Customize per servers file(a collection of related server favourites) or per server your parameters,paths, and executable.  
   
-![e520f9ebe590c73cf185b3c44d966954](http://i.gyazo.com/e520f9ebe590c73cf185b3c44d966954.png)  
+![56f6cdcbae5772aa10bfa0c69e7488ba](https://i.gyazo.com/56f6cdcbae5772aa10bfa0c69e7488ba.png)  
   
 ### Table of Contents  
 * **[Donate](#donate)**  
@@ -18,6 +18,15 @@ Wolfenstein: Enemy Territory launcher.
 If you wish to donate I would be grateful, maybe I could buy a new computer!  
 
 ### Changes  
+#### 1.3.3
+* Added windowborder config option  
+* Added an error log window popup when trying to join a server with invalid configuration  
+* Changed menu button sizes to a smaller version  
+* Fixed list apearing to select multiple servers  
+* Fixed updating paths when path isn't valid  
+* Fixed server status panel staying on an old server when trying to get info of an offline server  
+* Fixed buttons not getting destroyed in settings panel  
+  
 #### 1.3.2  
 * Removed the invalid update code now that there is only a button link  
   

@@ -1,6 +1,6 @@
 from subprocess import Popen
 
-WOLFSTARTER_VERSION = "v1.3.2"
+WOLFSTARTER_VERSION = "v1.3.3"
 UPDATE_RAWSRC_URL  = r"https://raw.githubusercontent.com/Zelly/ETWolfStarter/master/"
 UPDATE_RELEASE_URL = r"https://github.com/Zelly/ETWolfStarter/releases/"
 
