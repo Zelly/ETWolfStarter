@@ -78,6 +78,7 @@ class MenuButton(Button):
     def hide(self):
         """Hides itself from the grid"""
         self.grid_forget()
+
 class BrowseButton(Button):
     """File browse button share similar style to MenuButtons""" 
     def __init__(self, master=None, dir_var=None, cnf={}, **kw):

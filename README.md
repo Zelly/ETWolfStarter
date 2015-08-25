@@ -18,7 +18,7 @@ Wolfenstein: Enemy Territory launcher.
 If you wish to donate I would be grateful, maybe I could buy a new computer!  
 
 ### Changes  
-#### 1.3.3
+#### 1.3.3  
 * Added windowborder config option  
 * Added an error log window popup when trying to join a server with invalid configuration  
 * Changed menu button sizes to a smaller version  
