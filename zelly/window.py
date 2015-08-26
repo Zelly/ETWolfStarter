@@ -2,15 +2,16 @@ import json
 from os import startfile,getcwd,chdir
 from os.path import isfile, join, isdir
 from re import compile
-from tkinter import *  # @UnusedWildImport
+#import tkinter
 import tkinter.filedialog
 import tkinter.font
 import tkinter.messagebox
 import tkinter.simpledialog
 
+from tkinter import END,W,E,N,S,NORMAL,DISABLED
 from zelly.update import WolfStarterUpdater
 from zelly.serverdata import ServerData
-from zelly.constants import *  # @UnusedWildImport
+from zelly.constants import * # @UnusedWildImport
 
 FONT       = None
 Config = {
@@ -47,15 +48,15 @@ def cleanstr(s):
     """Cleans color codes from an W:ET String"""
     return clean_pattern.sub("", s)
 
-class MenuButton(Button):
+class MenuButton(tkinter.Button):
     """Flat styled button to be placed on navbar
     parent -- Should be Navbar
     column -- Placement from left to right
     row    -- Should probably always be 0 but added just incase"""
     def __init__(self, parent=None, column=0, row=0,sticky=W,cnf={}, **kw):
-        Button.__init__(self, parent, cnf, **kw)
+        tkinter.Button.__init__(self, parent, cnf, **kw)
         self.parent = parent
-        logfile("Making button with background %s" % Config['BUTTON_BACKGROUND'])
+        #logfile("MenuButton: Making button with background %s" % Config['BUTTON_BACKGROUND'])
         self.config(
                     background=Config['BUTTON_BACKGROUND'],
                     foreground=Config['BUTTON_FOREGROUND'],
@@ -79,39 +80,38 @@ class MenuButton(Button):
         """Hides itself from the grid"""
         self.grid_forget()
 
-class BrowseButton(Button):
+class BrowseButton(tkinter.Button):
     """File browse button share similar style to MenuButtons""" 
     def __init__(self, master=None, dir_var=None, cnf={}, **kw):
-        Button.__init__(self, master, cnf, **kw)
+        tkinter.Button.__init__(self, master, cnf, **kw)
         self.parent = master
         self.config(background=Config['BROWSE_BUTTON_BACKGROUND'],
                     foreground=Config['BROWSE_BUTTON_FOREGROUND'],
                     activebackground=Config['BROWSE_A_BUTTON_BACKGROUND'],
                     activeforeground=Config['BROWSE_A_BUTTON_FOREGROUND'],
                     borderwidth=0,
-                    # width           = 5,
-                    # height          = 2,
                     relief="flat",
                     padx=5,
                     cursor="hand2")
 
-class NavBar(Frame):
+class NavBar(tkinter.Frame):
     """Flat styled menu bar should contain only MenuButtons"""
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, *args, **kwargs)
-        self.parent = parent
+        tkinter.Frame.__init__(self, parent, *args, **kwargs)
+        self.MainWindow = parent
+        logfile("LOADING...    NAVBAR")
         self.config(background=Config['NAVBAR_BACKGROUND'] , cursor="hand1")
         
-        self.button_open     = MenuButton(self , BUTTON_OPEN     , text="Open..."    , command=parent.openfile)
-        self.button_saveas   = MenuButton(self , BUTTON_SAVE     , text="Save..."    , command=parent.saveasfile)
+        self.button_open     = MenuButton(self , BUTTON_OPEN     , text="Open..."    , command=self.MainWindow.openfile)
+        self.button_saveas   = MenuButton(self , BUTTON_SAVE     , text="Save..."    , command=self.MainWindow.saveasfile)
         self.button_issues   = MenuButton(self , BUTTON_ISSUE    , 0 , E , text="Issue..."   , command=self.issue)
         self.button_donate   = MenuButton(self , BUTTON_DONATE   , 0 , E , text="Donate..."   , command=self.donate)
         self.button_minimize = MenuButton(self , BUTTON_MINIMIZE , 0 , E , text="Minimize"   , command=self.minimize)
-        self.button_quit     = MenuButton(self , BUTTON_QUIT     , 0 , E , text="Quit"       , command=parent.quit)
+        self.button_quit     = MenuButton(self , BUTTON_QUIT     , 0 , E , text="Quit"       , command=self.MainWindow.quit)
         self.button_update   = MenuButton(self , BUTTON_UPDATE   , 0 , E , text="Update"     , command=self.updatelink)
         self.button_settings = MenuButton(self , BUTTON_SETTINGS , 0 , E , text="Settings"   , command=self.settings)
         self.button_logwin   = MenuButton(self , BUTTON_TEST     , 0 , E , text="LogWindow"  , command=self.logwindow)
-        self.versionlabel    = Label(self,
+        self.versionlabel    = tkinter.Label(self,
                                      background=Config['BUTTON_BACKGROUND'],
                                      foreground=Config['BUTTON_FOREGROUND'],
                                      relief="flat",
@@ -124,15 +124,15 @@ class NavBar(Frame):
         self.versionlabel.grid(column=LABEL_VERSION,row=0,sticky=E)
         self.columnconfigure(BUTTON_SETTINGS,weight=1)
         
-        
         self.button_open.show()
         self.button_saveas.show()
         self.button_settings.show()
         self.button_issues.show()
         self.button_donate.show()
-        self.button_minimize.show()
-        self.button_quit.show()
-        #self.button_logwin.show()
+        if not Config['windowborder']:
+            self.button_minimize.show()
+            self.button_quit.show()
+        self.button_logwin.show()
         def checkupdate():
             self.Updater = WolfStarterUpdater()
             if self.Updater.check():
@@ -143,53 +143,54 @@ class NavBar(Frame):
         
         self.grid(column=FRAME_NAVBAR[0], row=FRAME_NAVBAR[0], sticky=N + W + E + S)
     def logwindow(self):
-        LogWindow(self.parent.parent,"There was an error while joining, please review the last few entrys of the logfile.")
+        LogWindow(self.MainWindow)
     def minimize(self):
-        self.parent.minimized = True
-        self.parent.parent.overrideredirect(False)
-        self.parent.parent.iconify()
+        self.MainWindow.minimized = True
+        self.MainWindow.overrideredirect(False)
+        self.MainWindow.iconify()
     def issue(self):
-        self.parent.parent.overrideredirect(False)
-        self.parent.focus_ignore = True
-        ok = tkinter.messagebox.askyesno("Open issues page", "Would you like to go to the github issues page?",parent=self.parent.parent)
-        self.parent.focus_ignore = False
-        self.parent.parent.overrideredirect(True)
-        if ok: startfile(r"https://github.com/Zelly/ETWolfStarter/issues/new")
+        self.MainWindow.overrideredirect(False)
+        self.MainWindow.focus_ignore = True
+        ok = tkinter.messagebox.askyesno("Open issues page", "Would you like to go to the github issues page?",parent=self.MainWindow)
+        self.MainWindow.focus_ignore = False
+        self.MainWindow.overrideredirect(True)
+        if ok:
+            startfile(r"https://github.com/Zelly/ETWolfStarter/issues/new")
     def donate(self):
         print("Opening donate dialog")
-        self.parent.parent.overrideredirect(False)
-        self.parent.focus_ignore = True
-        ok = tkinter.messagebox.askyesno(title="Open donate page", message="Would you like to go to the paypal donate page?",parent=self.parent)
-        self.parent.focus_ignore = False
-        self.parent.parent.overrideredirect(True)
-        if ok: startfile(r"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=45BP8LRVZW7JC&lc=US&item_name=Zelly%20Github%20Donate&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted")
+        self.MainWindow.overrideredirect(False)
+        self.MainWindow.focus_ignore = True
+        ok = tkinter.messagebox.askyesno(title="Open donate page", message="Would you like to go to the paypal donate page?",parent=self.MainWindow)
+        self.MainWindow.focus_ignore = False
+        self.MainWindow.overrideredirect(True)
+        if ok:
+            startfile(r"https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=45BP8LRVZW7JC&lc=US&item_name=Zelly%20Github%20Donate&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donate_LG%2egif%3aNonHosted")
     def updatelink(self):
         print("Opening update dialog")
-        self.parent.parent.overrideredirect(False)
-        self.parent.focus_ignore = True
-        ok = tkinter.messagebox.askyesno(title="Open update download page", message="Would you like to go to the update download page?",parent=self.parent)
-        self.parent.focus_ignore = False
-        self.parent.parent.overrideredirect(True)
+        self.MainWindow.overrideredirect(False)
+        self.MainWindow.focus_ignore = True
+        ok = tkinter.messagebox.askyesno(title="Open update download page", message="Would you like to go to the update download page?",parent=self.MainWindow)
+        self.MainWindow.focus_ignore = False
+        self.MainWindow.overrideredirect(True)
         if ok:
             startfile(self.Updater.getreleaseurl())
-            exit(0) # Close because they can't udpate with it open
+            exit(0) # Close because they can't update with it open
     def settings(self):
-        self.parent.serversframe.closewindow()
-        Settings(self.parent)
-    
+        self.MainWindow.ServerFrame.closewindow()
+        Settings(self.MainWindow) # Mainframe here?
 
-class HeaderFrame(Frame):
+class HeaderFrame(tkinter.Frame):
     """Frame containing global parameters to be applied to all servers by default"""
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, *args, **kwargs)
+        tkinter.Frame.__init__(self, parent, *args, **kwargs)
         self.ServerFrame = parent
         
         self.config(background=Config['HEADER_BACKGROUND'])
         
         # Global ETPath
-        self.etpath_var    = StringVar()
-        self.etpath_label  = Label(self, text="ET: ", font=FONT, background=Config['HEADER_BACKGROUND'])
-        self.etpath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.etpath_var)
+        self.etpath_var    = tkinter.StringVar()
+        self.etpath_label  = tkinter.Label(self, text="ET: ", font=FONT, background=Config['HEADER_BACKGROUND'])
+        self.etpath_entry  = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.etpath_var)
         self.etpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getfilepath(self.etpath_var, self.updateconfig))
         
         self.etpath_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
@@ -198,9 +199,9 @@ class HeaderFrame(Frame):
         self.etpath_browse.grid( row=0 , column=2 , sticky=N + E)
         
         # Global fs_basepath
-        self.fs_basepath_var    = StringVar()
-        self.fs_basepath_label  = Label(self, text="fs_basepath: ", font=FONT, background=Config['HEADER_BACKGROUND'])
-        self.fs_basepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_basepath_var)
+        self.fs_basepath_var    = tkinter.StringVar()
+        self.fs_basepath_label  = tkinter.Label(self, text="fs_basepath: ", font=FONT, background=Config['HEADER_BACKGROUND'])
+        self.fs_basepath_entry  = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_basepath_var)
         self.fs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.fs_basepath_var, self.updateconfig))
         
         if Config['showbasepath']:
@@ -210,9 +211,9 @@ class HeaderFrame(Frame):
             self.fs_basepath_browse.grid( row=1 , column=2 , sticky=N + E)
         
         # Global fs_homepath
-        self.fs_homepath_var    = StringVar()
-        self.fs_homepath_label  = Label(self, text="fs_homepath: ", font=FONT, background=Config['HEADER_BACKGROUND'])
-        self.fs_homepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_homepath_var)
+        self.fs_homepath_var    = tkinter.StringVar()
+        self.fs_homepath_label  = tkinter.Label(self, text="fs_homepath: ", font=FONT, background=Config['HEADER_BACKGROUND'])
+        self.fs_homepath_entry  = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.fs_homepath_var)
         self.fs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.fs_homepath_var, self.updateconfig))
         
         if Config['showhomepath']:
@@ -222,18 +223,18 @@ class HeaderFrame(Frame):
             self.fs_homepath_browse.grid( row=2 , column=2 , sticky=N + E)
         
         # Global Parameters
-        self.parameters_var = StringVar()
-        self.parameters_label = Label(self, text="Parameters: ", font=FONT, background=Config['HEADER_BACKGROUND'])
-        self.parameters_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.parameters_var)
+        self.parameters_var   = tkinter.StringVar()
+        self.parameters_label = tkinter.Label(self, text="Parameters: ", font=FONT, background=Config['HEADER_BACKGROUND'])
+        self.parameters_entry = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.parameters_var)
         
         self.parameters_entry.bind(sequence='<KeyRelease>', func=self.updateconfig)
         self.parameters_label.grid(row=3, column=0, sticky=N + W)
         self.parameters_entry.grid(row=3, column=1, sticky=N + W + E)
         
-        if self.ServerFrame.parent.serverdata.fs_basepath != None: self.fs_basepath_var.set(self.ServerFrame.parent.serverdata.fs_basepath)
-        if self.ServerFrame.parent.serverdata.fs_homepath != None: self.fs_homepath_var.set(self.ServerFrame.parent.serverdata.fs_homepath)
-        if self.ServerFrame.parent.serverdata.parameters != None: self.parameters_var.set(self.ServerFrame.parent.serverdata.parameters)
-        if self.ServerFrame.parent.serverdata.ETPath != None: self.etpath_var.set(self.ServerFrame.parent.serverdata.ETPath)
+        if self.ServerFrame.MainWindow.ServerData.fs_basepath != None: self.fs_basepath_var.set(self.ServerFrame.MainWindow.ServerData.fs_basepath)
+        if self.ServerFrame.MainWindow.ServerData.fs_homepath != None: self.fs_homepath_var.set(self.ServerFrame.MainWindow.ServerData.fs_homepath)
+        if self.ServerFrame.MainWindow.ServerData.parameters != None: self.parameters_var.set(self.ServerFrame.MainWindow.ServerData.parameters)
+        if self.ServerFrame.MainWindow.ServerData.ETPath != None: self.etpath_var.set(self.ServerFrame.MainWindow.ServerData.ETPath)
         
         self.grid_columnconfigure(1, minsize=400)
     def show(self):
@@ -241,22 +242,22 @@ class HeaderFrame(Frame):
     def hide(self):
         self.grid_forget()
     def updateconfig(self, e):
-        if self.fs_basepath_var.get() != None: self.ServerFrame.parent.serverdata.fs_basepath = self.fs_basepath_var.get()
-        if self.fs_homepath_var.get() != None: self.ServerFrame.parent.serverdata.fs_homepath = self.fs_homepath_var.get()
-        if self.etpath_var.get() != None: self.ServerFrame.parent.serverdata.ETPath = self.etpath_var.get()
-        if self.parameters_var.get() != None: self.ServerFrame.parent.serverdata.parameters = self.parameters_var.get()
+        if self.fs_basepath_var.get() != None: self.ServerFrame.MainWindow.ServerData.fs_basepath = self.fs_basepath_var.get()
+        if self.fs_homepath_var.get() != None: self.ServerFrame.MainWindow.ServerData.fs_homepath = self.fs_homepath_var.get()
+        if self.etpath_var.get() != None: self.ServerFrame.MainWindow.ServerData.ETPath = self.etpath_var.get()
+        if self.parameters_var.get() != None: self.ServerFrame.MainWindow.ServerData.parameters = self.parameters_var.get()
 
-class ServerListFrame(Frame):
+class ServerListFrame(tkinter.Frame):
     """Contains the server list"""
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, *args, **kwargs)
+        tkinter.Frame.__init__(self, parent, *args, **kwargs)
         self.ServerFrame = parent
         
         self.config(background=Config['SERVERLIST_BACKGROUND'], padx=5, pady=5)
         
         # Server List Titles
-        self.servers_label = Label(self, text="Title", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
-        self.servers       = Listbox(self, width=25, relief="flat",
+        self.servers_label = tkinter.Label(self, text="Title", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
+        self.servers       = tkinter.Listbox(self, width=25, relief="flat",
                                      borderwidth=0,
                                      font=FONT,
                                      selectbackground=Config['LIST_SELECT_BACK'],
@@ -272,8 +273,8 @@ class ServerListFrame(Frame):
         self.servers.grid(row=1, column=0, sticky=N + W + E)
         
         # Server Map
-        self.servermap_label = Label(self, text="Map", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
-        self.servermap       = Listbox(self, width=10, relief="flat",
+        self.servermap_label = tkinter.Label(self, text="Map", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
+        self.servermap       = tkinter.Listbox(self, width=10, relief="flat",
                                        borderwidth=0,
                                        font=FONT,
                                        selectbackground=Config['LIST_SELECT_BACK'],
@@ -289,8 +290,8 @@ class ServerListFrame(Frame):
         self.servermap.grid(row=1, column=1, sticky=N + W + E)
         
         # Server Players
-        self.serverplayers_label = Label(self, text="Players", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
-        self.serverplayers       = Listbox(self, width=10, relief="flat",
+        self.serverplayers_label = tkinter.Label(self, text="Players", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
+        self.serverplayers       = tkinter.Listbox(self, width=10, relief="flat",
                                            borderwidth=0,
                                            font=FONT,
                                            selectbackground=Config['LIST_SELECT_BACK'],
@@ -306,8 +307,8 @@ class ServerListFrame(Frame):
         self.serverplayers.grid(row=1, column=2, sticky=N + W + E)
         
         # Server Ping
-        self.serverping_label = Label(self, text="Ping", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
-        self.serverping       = Listbox(self, width=10, relief="flat",
+        self.serverping_label = tkinter.Label(self, text="Ping", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
+        self.serverping       = tkinter.Listbox(self, width=10, relief="flat",
                                         borderwidth=0,
                                         font=FONT,
                                         selectbackground=Config['LIST_SELECT_BACK'],
@@ -376,12 +377,12 @@ class ServerListFrame(Frame):
         selectid = self.get()
         if selectid == None: return
         
-        Server = self.ServerFrame.parent.serverdata.Servers[selectid]
+        Server = self.ServerFrame.MainWindow.ServerData.Servers[selectid]
         if not Server:
-            logfile("Error selecting server %d" % selectid)
+            logfile("selectserver: Error selecting server %d" % selectid)
             return
         
-        logfile("Selecting server %s" % Server['title'])
+        logfile("selectserver: Selecting server %s" % Server['title'])
 
         self.select((selectid,))
         self.ServerFrame.ServerDataFrame.set(Server)
@@ -398,43 +399,43 @@ class ServerListFrame(Frame):
             else:
                 self.ServerFrame.NoticeLabel.hide()
 
-class ServerDataFrame(Frame):
+class ServerDataFrame(tkinter.Frame):
     """Frame contains all server related frames"""
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, *args, **kwargs)
+        tkinter.Frame.__init__(self, parent, *args, **kwargs)
         self.ServerFrame = parent
         
         self.config(background=Config['SERVERDATA_BACKGROUND'])
         
         # Server title
-        self.servertitle_var   = StringVar()
-        self.servertitle_label = Label(self, text="Title: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
-        self.servertitle_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.servertitle_var)
+        self.servertitle_var   = tkinter.StringVar()
+        self.servertitle_label = tkinter.Label(self, text="Title: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.servertitle_entry = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.servertitle_var)
         
         self.servertitle_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         self.servertitle_label.grid( row=0, column=0, sticky=N + W)
         self.servertitle_entry.grid( row=0, column=1, sticky=N + W + E)
         
         # Server Password
-        self.serverpassword_var   = StringVar()
-        self.serverpassword_label = Label(self, text="Password: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
-        self.serverpassword_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverpassword_var)
+        self.serverpassword_var   = tkinter.StringVar()
+        self.serverpassword_label = tkinter.Label(self, text="Password: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverpassword_entry = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverpassword_var)
         
         self.serverpassword_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         
         # Server address
-        self.serveraddress_var   = StringVar()
-        self.serveraddress_label = Label(self, text="Address: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
-        self.serveraddress_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveraddress_var)
+        self.serveraddress_var   = tkinter.StringVar()
+        self.serveraddress_label = tkinter.Label(self, text="Address: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serveraddress_entry = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveraddress_var)
         
         self.serveraddress_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         self.serveraddress_label.grid( row=2, column=0, sticky=N + W)
         self.serveraddress_entry.grid( row=2, column=1, sticky=N + W + E)
         
         # Server ETPath
-        self.serveretpath_var    = StringVar()
-        self.serveretpath_label  = Label(self, text="ET: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
-        self.serveretpath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveretpath_var)
+        self.serveretpath_var    = tkinter.StringVar()
+        self.serveretpath_label  = tkinter.Label(self, text="ET: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serveretpath_entry  = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serveretpath_var)
         self.serveretpath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getfilepath(self.serveretpath_var, self.updateserver))
         
         self.serveretpath_entry.bind(  sequence='<KeyRelease>', func=self.updateserver)
@@ -443,9 +444,9 @@ class ServerDataFrame(Frame):
         self.serveretpath_browse.grid( row=3, column=2, sticky=N + E)
         
         # Server fs_basepath
-        self.serverfs_basepath_var    = StringVar()
-        self.serverfs_basepath_label  = Label(self, text="fs_basepath: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
-        self.serverfs_basepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_basepath_var)
+        self.serverfs_basepath_var    = tkinter.StringVar()
+        self.serverfs_basepath_label  = tkinter.Label(self, text="fs_basepath: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverfs_basepath_entry  = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_basepath_var)
         self.serverfs_basepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.serverfs_basepath_var, self.updateserver))
         
         if Config['showbasepath']:
@@ -455,9 +456,9 @@ class ServerDataFrame(Frame):
             self.serverfs_basepath_browse.grid( row=4, column=2, sticky=N + E)
         
         # Server fs_homepath
-        self.serverfs_homepath_var    = StringVar()
-        self.serverfs_homepath_label  = Label(self, text="fs_homepath: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
-        self.serverfs_homepath_entry  = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_homepath_var)
+        self.serverfs_homepath_var    = tkinter.StringVar()
+        self.serverfs_homepath_label  = tkinter.Label(self, text="fs_homepath: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverfs_homepath_entry  = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverfs_homepath_var)
         self.serverfs_homepath_browse = BrowseButton(self, text="Browse...", command=lambda :self.ServerFrame.getpath(self.serverfs_homepath_var, self.updateserver))
         
         if Config['showhomepath']:
@@ -467,9 +468,9 @@ class ServerDataFrame(Frame):
             self.serverfs_homepath_browse.grid( row=5, column=2, sticky=N + E)
         
         # Server extra parameters
-        self.serverparams_var   = StringVar()
-        self.serverparams_label = Label(self, text="Parameters: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
-        self.serverparams_entry = Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverparams_var)
+        self.serverparams_var   = tkinter.StringVar()
+        self.serverparams_label = tkinter.Label(self, text="Parameters: ", font=FONT, background=Config['SERVERDATA_BACKGROUND'])
+        self.serverparams_entry = tkinter.Entry(self, font=FONT, background=Config['ENTRY_BACKGROUND'], foreground=Config['ENTRY_FOREGROUND'], textvariable=self.serverparams_var)
         
         self.serverparams_entry.bind( sequence='<KeyRelease>', func=self.updateserver)
         self.serverparams_label.grid( row=6, column=0, sticky=N + W)
@@ -498,11 +499,11 @@ class ServerDataFrame(Frame):
     def updateserver(self, e):
         selectid = self.ServerFrame.ServerListFrame.get()
         if selectid == None: return
-        Server = self.ServerFrame.parent.serverdata.Servers[selectid]
+        Server = self.ServerFrame.MainWindow.ServerData.Servers[selectid]
         if not Server:
-            logfile("Error updating server status %d" % selectid)
+            logfile("updateserver: Error updating server status %d" % selectid)
             return
-        logfile("Updating %s at %d" % ( Server['title'] , selectid ) )
+        logfile("updateserver: Updating %s at %d" % ( Server['title'] , selectid ) )
         
         if self.servertitle_var.get() != None: Server['title'] = self.servertitle_var.get()
         if self.serveraddress_var.get() != None: Server['address'] = self.serveraddress_var.get()
@@ -520,17 +521,18 @@ class ServerDataFrame(Frame):
         self.serverfs_basepath_var.set('')
         self.serverfs_homepath_var.set('')
         self.serveretpath_var.set('')
-class ServerStatusFrame(Frame):
+    
+class ServerStatusFrame(tkinter.Frame):
     """Contains actual serverdata information such as players and cvars"""
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, *args, **kwargs)
-        self.parent = parent
+        tkinter.Frame.__init__(self, parent, *args, **kwargs)
+        self.ServerFrame = parent
         
         self.config(background=Config['SERVERSTATUS_BACKGROUND'])
         
         self.currentline = 1
         
-        self.text = Text(
+        self.text = tkinter.Text(
                          self,
                          background=Config['SERVERSTATUS_BACKGROUND'],
                          font=FONT,
@@ -544,7 +546,7 @@ class ServerStatusFrame(Frame):
         
         self.text.grid(sticky=W + N)
         
-        self.text_scroll = Scrollbar(self, command=self.text.yview, background=Config['BUTTON_BACKGROUND'])
+        self.text_scroll = tkinter.Scrollbar(self, command=self.text.yview, background=Config['BUTTON_BACKGROUND'])
         self.text.config(yscrollcommand=self.text_scroll.set)
         self.text_scroll.grid(row=0, column=1, sticky="ns")
     def show(self):
@@ -569,11 +571,12 @@ class ServerStatusFrame(Frame):
         self.text.config(state=NORMAL)
         self.text.delete(1.0, END)
         self.text.config(state=DISABLED)
-class NoticeLabel(Label):
+    
+class NoticeLabel(tkinter.Label):
     def __init__(self, parent=None, cnf={}, **kw):
-        Label.__init__(self, parent, cnf, **kw)
+        tkinter.Label.__init__(self, parent, cnf, **kw)
         self.ServerFrame = parent
-        self.textvar     = StringVar(value="FS_Basepath and FS_Homepath are not required.\nThey will be set to the folder of you ET.exe if not specfied.")
+        self.textvar     = tkinter.StringVar(value="FS_Basepath and FS_Homepath are not required.\nThey will be set to the folder of you ET.exe if not specfied.")
         
         self.config(font=FONT,background=Config['WINDOW_BACKGROUND'],textvariable=self.textvar)
         
@@ -585,11 +588,11 @@ class NoticeLabel(Label):
     def hide(self):
         self.grid_forget()
 
-class ServerFrame(Frame):
+class ServerFrame(tkinter.Frame):
     """Frame contains all server related frames"""
     def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, *args, **kwargs)
-        self.parent = parent
+        tkinter.Frame.__init__(self, parent, *args, **kwargs)
+        self.MainWindow = parent
         
         self.config(background=Config['WINDOW_BACKGROUND'], padx=5, pady=5)
         
@@ -598,10 +601,10 @@ class ServerFrame(Frame):
         self.ServerDataFrame   = ServerDataFrame(self)
         self.ServerStatusFrame = ServerStatusFrame(self)
         
-        self.button_addserver    = MenuButton(self.parent.navbar , BUTTON_ADD    , text="Add"        , command=self.addserver)
-        self.button_removeserver = MenuButton(self.parent.navbar , BUTTON_REMOVE , text="Remove"     , command=self.removeserver)
+        self.button_addserver    = MenuButton(self.MainWindow.navbar , BUTTON_ADD    , text="Add"        , command=self.addserver)
+        self.button_removeserver = MenuButton(self.MainWindow.navbar , BUTTON_REMOVE , text="Remove"     , command=self.removeserver)
         #self.button_rcon         = MenuButton( self.parent.navbar , BUTTON_RCON , text="Rcon"       , command=parent.rcon)
-        self.button_joinserver   = MenuButton(self.parent.navbar , BUTTON_JOIN   , text="Join"       , command=self.joinserver)
+        self.button_joinserver   = MenuButton(self.MainWindow.navbar , BUTTON_JOIN   , text="Join"       , command=self.joinserver)
         self.button_addserver.show()
         
         
@@ -612,47 +615,53 @@ class ServerFrame(Frame):
         self.grid(sticky=W + S + N + E)
         
         self.after(100, self.create_server_list)
+        
     def create_server_list(self):
         self.ServerStatusFrame.hide()
         self.ServerDataFrame.hide()
         self.ServerDataFrame.clear()
         self.button_joinserver.hide()
         self.button_removeserver.hide()
-        for x in range(0, len(self.parent.serverdata.Servers)): self.serverstatus(x)
+        for x in range(0, len(self.MainWindow.ServerData.Servers)):
+            self.serverstatus(x)
         self.refresh_list(None)
+        
     def refresh_list(self, selectid=None):
         self.ServerListFrame.clear()
-        for Server in self.parent.serverdata.Servers: self.ServerListFrame.add(Server)
-        if selectid != None: self.ServerListFrame.select(selectid)
+        for Server in self.MainWindow.ServerData.Servers:
+            self.ServerListFrame.add(Server)
+        if selectid != None:
+            self.ServerListFrame.select(selectid)
+        
     # Buttons
     def addserver(self): # Leaving error checking up to the join command
         servertitle = tkinter.simpledialog.askstring("New Server Title", "Please insert a unique server title")
-        if not servertitle or any(s['title'] == servertitle for s in self.parent.serverdata.Servers):
-            logfile("Invalid server title")
+        if not servertitle or any(s['title'] == servertitle for s in self.MainWindow.ServerData.Servers):
+            logfile("addserver: Invalid server title")
             return
         serveraddress = tkinter.simpledialog.askstring("New Server Address", "Please insert full server address.(unique)\nExample: 127.0.0.1:27960\nIf it is a hostname make sure you have the port at the end")
-        if not serveraddress or any(s['address'] == serveraddress for s in self.parent.serverdata.Servers):
-            logfile("Invalid server address")
+        if not serveraddress or any(s['address'] == serveraddress for s in self.MainWindow.ServerData.Servers):
+            logfile("addserver: Invalid server address")
             return
-        self.parent.serverdata.add_server({'address':serveraddress, 'title':servertitle})
+        self.MainWindow.ServerData.add_server({'address':serveraddress, 'title':servertitle})
         self.create_server_list()
         self.ServerListFrame.select(END) # Select added server
         self.selectserver(None) # Get Server Data
     def removeserver(self):
         selectid = self.ServerListFrame.get()
         if selectid == None: return
-        if not self.parent.serverdata.Servers[selectid]:
-            logfile("Error updating server %d" % selectid)
+        if not self.MainWindow.ServerData.Servers[selectid]:
+            logfile("removeserver: Error updating server %d" % selectid)
             return
-        del self.parent.serverdata.Servers[selectid]
+        del self.MainWindow.ServerData.Servers[selectid]
         self.create_server_list()
     def getcommandline(self,selectid=None):
         # TODO Move this to serverdata
         #selectid = self.ServerListFrame.get()
         if selectid == None: return
-        Server = self.parent.serverdata.Servers[selectid]
+        Server = self.MainWindow.ServerData.Servers[selectid]
         if not Server:
-            logfile("Error getting command line for server %d" % selectid)
+            logfile("getcommandline: Error getting command line for server %d" % selectid)
             return
         # Generate Startup Line #
         etpath      = ''
@@ -669,9 +678,9 @@ class ServerFrame(Frame):
         if Server['ETPath']:
             etpath = Server['ETPath']
         else:
-            etpath = self.parent.serverdata.ETPath
+            etpath = self.MainWindow.ServerData.ETPath
         if not isfile(etpath):
-            logfile("ET Path is not valid file")
+            logfile("getcommandline: ET Path is not valid file")
             return None
         
         # Check for fs_basepath
@@ -680,7 +689,7 @@ class ServerFrame(Frame):
         if Server['fs_basepath']:
             fs_basepath = Server['fs_basepath']
         else:
-            fs_basepath = self.parent.serverdata.fs_basepath
+            fs_basepath = self.MainWindow.ServerData.fs_basepath
         if not isdir(fs_basepath): fs_basepath = '' #will this work? or will it just default to wolfstarter directory
         #if not fs_basepath: fs_basepath = "/".join(etpath.replace('\\', '/').split("/")[0:-1])
         
@@ -690,12 +699,12 @@ class ServerFrame(Frame):
         if Server['fs_homepath']:
             fs_homepath = Server['fs_homepath']
         else:
-            fs_homepath = self.parent.serverdata.fs_homepath
+            fs_homepath = self.MainWindow.ServerData.fs_homepath
         if not isdir(fs_homepath): fs_homepath = ''
         #if not fs_homepath: fs_homepath = fs_basepath
         
         # Paramaters are extra parameters like exec configs or something.
-        if self.parent.serverdata.parameters: parameters = self.parent.serverdata.parameters
+        if self.MainWindow.ServerData.parameters: parameters = self.MainWindow.ServerData.parameters
         if Server['parameters']:
             if parameters: parameters += ' '
             parameters += Server['parameters']
@@ -705,19 +714,19 @@ class ServerFrame(Frame):
             if "gamename" in Server['cvar']: fs_game = Server['cvar']['gamename']
             if fs_basepath:
                 if not isdir(join(fs_basepath,fs_game)):
-                    logfile("Mod path does not exist in basepath")
+                    logfile("getcommandline: Mod path does not exist in basepath - setting to etmain")
                     fs_game = "etmain"
             else:
                 etpathdir = "/".join(etpath.replace('\\', '/').split("/")[0:-1])
                 if not isdir(join(etpathdir,fs_game)):
-                    logfile("Mod path does not exist in et path")
+                    logfile("getcommandline: Mod path does not exist in et path - setting to etmain")
                     fs_game = "etmain"
         
         if not address:
-            logfile("Address not valid")
+            logfile("getcommandline: Address not valid")
             return
         if not isfile(etpath):
-            logfile("ET Executable is not valid")
+            logfile("getcommandline: ET Executable is not valid")
             return
         
         commandline = "\"%s\"" % etpath
@@ -732,21 +741,22 @@ class ServerFrame(Frame):
         
         # End command line generate #
         
-        logfile(commandline)
+        logfile("getcommandline: " + commandline)
         return (commandline,"/".join(etpath.replace('\\', '/').split("/")[0:-1]))
     def joinserver(self,e=None):
         selectid = self.ServerListFrame.get()
         if selectid == None: return
         command_info = self.getcommandline(selectid)
         if not command_info or not command_info[0] or not command_info[1]:
-            LogWindow(self.parent.parent,"There was with your configuration. This error log should tell you what went wrong.")
+            logfile("joinserver: Couldn't find command line")
+            LogWindow(self.MainWindow,"There was with your configuration. This error log should tell you what went wrong.")
             return
         cwd = getcwd()
-        logfile("Changing directory to %s" % command_info[1])
+        logfile("joinserver: Changing directory to %s" % command_info[1])
         chdir(command_info[1])
-        logfile("Joining server %s" % selectid)
+        logfile("joinserver: Joining server %s" % selectid)
         openprocess(command_info[0])
-        logfile("Returning directory to %s" % cwd)
+        logfile("joinserver: Returning directory to %s" % cwd)
         chdir(cwd)
     def serverstatus(self, selectid=None):
         specificserver = False
@@ -759,18 +769,18 @@ class ServerFrame(Frame):
             self.ServerStatusFrame.hide()
         if selectid == None: return
         
-        Server = self.parent.serverdata.Servers[selectid]
+        Server = self.MainWindow.ServerData.Servers[selectid]
         
         if not Server:
-            logfile("Error getting server playerlist %d" % selectid)
+            logfile("serverstatus: Error getting server playerlist %d" % selectid)
             return
         
-        logfile("Getting serverstatus for %d (%s)" % (selectid, Server['title']))
+        logfile("serverstatus: Getting serverstatus for %d (%s)" % (selectid, Server['title']))
         
-        self.parent.serverdata.getstatus(selectid)
+        self.MainWindow.ServerData.getstatus(selectid)
         
         if Server['ping'] <= 0:
-            logfile("Could not ping server")
+            logfile("serverstatus: Could not ping server")
             return
         
         if not specificserver:
@@ -817,70 +827,52 @@ class ServerFrame(Frame):
         currentdir = browse_var.get()
         if not currentdir or not isdir(currentdir):
             currentdir = getcwd()
-        self.parent.focus_ignore = True
+        self.MainWindow.focus_ignore = True
         dir_path = tkinter.filedialog.askdirectory(parent=self, initialdir=currentdir, title="Navigate to your path")
-        self.parent.focus_ignore = False
+        self.MainWindow.focus_ignore = False
         
         if dir_path and isdir(dir_path):
             browse_var.set(dir_path)
             updatemethod(self)
         else:
-            logfile("Could not find directory path")
+            logfile("getpath-dialog: Could not find directory path")
     def getfilepath(self, browse_var=None, updatemethod=None):
         if not browse_var: return
         if not updatemethod: return
         currentdir = browse_var.get()
         if not currentdir or not isdir(currentdir):
             currentdir = getcwd()
-        self.parent.focus_ignore = True
+        self.MainWindow.focus_ignore = True
         file_path = tkinter.filedialog.askopenfilename(parent=self, initialdir=currentdir, title="Navigate to your your exe", filetypes=(("exe files", "*.exe"), ("All files", "*")),)
-        self.parent.focus_ignore = False
+        self.MainWindow.focus_ignore = False
         
         if file_path and isfile(file_path):
             browse_var.set(file_path)
             updatemethod(self)
         else:
-            logfile("Could not find filepath")
+            logfile("getfilepath-dialog: Could not find filepath")
     def closewindow(self):
-        
         self.button_addserver.destroy()
         self.button_removeserver.destroy()
         self.button_joinserver.destroy()
-        for child in self.winfo_children(): child.destroy()
+        for child in self.winfo_children():
+            child.destroy()
         self.destroy()
 
-class SettingCheckButton(Checkbutton):
-    def __init__(self, master=None, labeltext=None,row=0, cnf={}, **kw):
-        Checkbutton.__init__(self, master, cnf, **kw)
-        
-        self.parent = master
-        
-        self.var = IntVar()
-        
-        self.config(variable=self.var,background=Config['WINDOW_BACKGROUND'])
-        self.label = Label(self.parent,text=labeltext,background=Config['WINDOW_BACKGROUND'])
-        self.label.grid(row=row,column=0,sticky=W)
-        
-        self.grid(row=row,column=1,sticky=W)
-    def get(self):
-        if self.var.get() == 1:
-            return True
-        else:
-            return False
-class LogWindow(Toplevel):
+class LogWindow(tkinter.Toplevel):
     def __init__(self, parent=None,labeltext="", cnf={}, **kw):
-        Toplevel.__init__(self, parent, cnf,**kw)
-        self.parent = parent
+        tkinter.Toplevel.__init__(self, parent, cnf,**kw)
+        self.MainWindow = parent
         self.config(background=Config['WINDOW_BACKGROUND'],padx=5,pady=5)
         self.title("Log Window")
         
         if labeltext:
-            self.label = Label(self,text=labeltext,background="#000000",foreground="#FF0000")
+            self.label = tkinter.Label(self,text=labeltext,background="#000000",foreground="#FF0000")
             self.label.grid(row=0,column=0,columnspan=2)
         
-        self.textbox   = Text(self,width=115,height=47)
+        self.textbox   = tkinter.Text(self,width=115,height=47)
         
-        self.text_scroll = Scrollbar(self, command=self.textbox.yview, background=Config['BUTTON_BACKGROUND'])
+        self.text_scroll = tkinter.Scrollbar(self, command=self.textbox.yview, background=Config['BUTTON_BACKGROUND'])
         self.textbox.config(yscrollcommand=self.text_scroll.set)
         self.text_scroll.grid(row=1, column=1, sticky="nse")
         
@@ -891,22 +883,42 @@ class LogWindow(Toplevel):
         self.textbox.yview(END)
         self.textbox.grid(row=1,column=0,sticky="W")
         self.grid()
-class Settings(Frame):
-    """Frame contains all server related frames"""
-    def __init__(self, parent, *args, **kwargs):
-        Frame.__init__(self, parent, *args, **kwargs)
+
+class SettingCheckButton(tkinter.Checkbutton):
+    def __init__(self, master=None, labeltext=None,row=0, cnf={}, **kw):
+        tkinter.Checkbutton.__init__(self, master, cnf, **kw)
         
-        self.parent = parent
+        self.Settings = master
+        
+        self.var = tkinter.IntVar()
+        
+        self.config(variable=self.var,background=Config['WINDOW_BACKGROUND'])
+        self.label = tkinter.Label(self.Settings,text=labeltext,background=Config['WINDOW_BACKGROUND'])
+        self.label.grid(row=row,column=0,sticky=W)
+        
+        self.grid(row=row,column=1,sticky=W)
+    def get(self):
+        if self.var.get() == 1:
+            return True
+        else:
+            return False
+
+class Settings(tkinter.Frame):
+    """Sepearate window for settings"""
+    def __init__(self, parent, *args, **kwargs):
+        tkinter.Frame.__init__(self, parent, *args, **kwargs)
+        
+        self.MainWindow = parent
         
         self.config(background=Config['WINDOW_BACKGROUND'], padx=5, pady=5)
         
-        self.label_info = Label(self,text="The color options are only editable in wolfstarter.json",background=Config['WINDOW_BACKGROUND'])
+        self.label_info = tkinter.Label(self,text="The color options are only editable in wolfstarter.json",background=Config['WINDOW_BACKGROUND'])
         self.label_info.grid(sticky=W)
         
-        self.launchmod = SettingCheckButton(self,"Launches ET with the mod of the server instead of etmain",1)
-        self.basepath  = SettingCheckButton(self,"Show the basepath text entry",2)
-        self.homepath  = SettingCheckButton(self,"Show the homepath text entry",3)
-        self.command   = SettingCheckButton(self,"Show the full command line text that will be sent to et executable",4)
+        self.launchmod    = SettingCheckButton(self,"Launches ET with the mod of the server instead of etmain",1)
+        self.basepath     = SettingCheckButton(self,"Show the basepath text entry",2)
+        self.homepath     = SettingCheckButton(self,"Show the homepath text entry",3)
+        self.command      = SettingCheckButton(self,"Show the full command line text that will be sent to et executable",4)
         self.windowborder = SettingCheckButton(self,"Show the Windows's window border at all times",5)
         
         self.savebutton = MenuButton(self,0,6,text="save",command=self.closewindow)
@@ -926,78 +938,74 @@ class Settings(Frame):
         Config['showcommandline'] = self.command.get()
         Config['windowborder']    = self.windowborder.get()
         
-        self.parent.save_config()
-        for child in self.winfo_children(): child.destroy()
-        self.parent.serverdata   = ServerData()
-        self.parent.serverdata.load_serverfile(Config['servers'])
-        self.parent.serversframe = ServerFrame(self.parent)
+        self.MainWindow.save_config()
+        for child in self.winfo_children():
+            child.destroy()
+        self.MainWindow.ServerData   = ServerData()
+        self.MainWindow.ServerData.load_serverfile(Config['servers'])
+        self.MainWindow.ServerFrame = ServerFrame(self.MainWindow)
         
         if self.windowborder.get():
-            self.parent.parent.overrideredirect(False)
+            self.MainWindow.overrideredirect(False)
         else:
-            self.parent.parent.overrideredirect(True)
+            self.MainWindow.overrideredirect(True)
         
         self.destroy()
 
-class Window(Frame):
+class Window(tkinter.Tk):
     def __init__(self , *args, **kwargs):
-        global FONT
+        global FONT # Do I need?
         self.focus_ignore = False
         self.minimized    = False
-        self.parent       = Tk()
-        self.serverdata   = ServerData()
-        self.serversframe = None
-        FONT              = tkinter.font.Font(family="Courier New", size=10)
-        
-        Frame.__init__(self, self.parent, *args, **kwargs)
-        
         self.load_config()
         
-        self.config(background=Config['WINDOW_BACKGROUND'])
+        tkinter.Tk.__init__(self)
+        FONT              = tkinter.font.Font(family="Courier New", size=10)
+        # self.bind("<FocusIn>"         , self.OnFocus)
+        # self.bind("<FocusOut>"        , self.OnLostFocus)
+        if not Config['windowborder']:
+            self.overrideredirect(True)
+        self.config(background=Config['WINDOW_BORDER'], padx=5, pady=5)  # Set padding and background color
+        self.title("WolfStarter by Zelly")
+        self.bind("<FocusIn>"         , self.OnFocus)
+        self.bind("<FocusOut>"        , self.OnLostFocus)
+        self.bind("<Configure>"       , self.OnConfigure)
+        self.iconbitmap('WolfStarterLogo.ico')
+        
+        self.mainframe = tkinter.Frame(self,background=Config["WINDOW_BACKGROUND"])
         
         self.navbar = NavBar(self)
-        self.grid()
         
         # Bind the move window function
         self.navbar.bind("<ButtonPress-1>"   , self.StartMove)
         self.navbar.bind("<ButtonRelease-1>" , self.StopMove)
         self.navbar.bind("<B1-Motion>"       , self.OnMotion)
-        # self.parent.bind("<FocusIn>"         , self.OnFocus)
-        # self.parent.bind("<FocusOut>"        , self.OnLostFocus)
-        if not Config['windowborder']:
-            self.parent.overrideredirect(True)
-        self.parent.config(background=Config['WINDOW_BORDER'], padx=5, pady=5)  # Set padding and background color
-        self.parent.title("WolfStarter by Zelly")
-        self.parent.bind("<FocusIn>"         , self.OnFocus)
-        self.parent.bind("<FocusOut>"        , self.OnLostFocus)
-        self.parent.bind("<Configure>"       , self.OnConfigure)
-        self.parent.iconbitmap('WolfStarterLogo.ico')
         
-        self.serverdata   = ServerData()
-        self.serverdata.load_serverfile(Config['servers'])
-        self.serversframe = ServerFrame(self)
+        self.mainframe.grid()
         
-        self.parent.mainloop()
-        # Handle Errors
-        # Check if window already exists before creating new one
+        self.ServerData   = ServerData()
+        self.ServerData.load_serverfile(Config['servers'])
+        self.ServerFrame = ServerFrame(self)
+        
+        self.mainloop()
     def load_config(self):
-        #global Config
-        
+        logfile(str(" Loading config ").center(24,"-"))
         if not isfile(join(getcwd() , 'wolfstarter.json')):
             logfile("Config not found using default")
         else:
-            with open(join(getcwd() , 'wolfstarter.json')) as configfile: jsondata = json.load(configfile)
+            with open(join(getcwd() , 'wolfstarter.json')) as configfile:
+                jsondata = json.load(configfile)
             if jsondata:
                 for key in jsondata:
                     if key in Config:
                         Config[key] = jsondata[key]
                         logfile(key.ljust(32) + " = " + str(jsondata[key]))
                     # Make sure to only do keys that exist.
+        logfile(str(" Loaded config ").center(24,"-"))
     def save_config(self):
-        # If changes then ask to save
-        self.serverdata.save_serverfile(Config['servers'])
+        self.ServerData.save_serverfile(Config['servers'])
         jsonfile = open(join(getcwd() , 'wolfstarter.json'), 'w')
-        json.dump(Config, jsonfile, skipkeys=True, allow_nan=True, sort_keys=True, indent=4)
+        json.dump(Config, jsonfile, skipkeys=True, sort_keys=True, indent=4)
     # Opening and closing files and application
     def openfile(self):
         self.focus_ignore = True
@@ -1014,11 +1022,11 @@ class Window(Frame):
             return
         self.focus_ignore      = False
         Config['servers']      = fname
-        self.serverdata        = ServerData()
-        self.serverdata.load_serverfile(Config['servers'])
+        self.ServerData        = ServerData()
+        self.ServerData.load_serverfile(Config['servers'])
         logfile("Loaded Servers file: %s" % Config['servers'])
-        if self.serversframe:
-            self.serversframe.destroy()
+        if self.ServerFrame:
+            self.ServerFrame.destroy()
         self.serversframe = ServerFrame(self)
     def saveasfile(self):
         self.focus_ignore = True
@@ -1032,15 +1040,15 @@ class Window(Frame):
             tkinter.messagebox.showinfo(title="Invalid servers file", message="Servers file was not found", parent=self)
             self.focus_ignore = False
             # self.parent.focus_force()
-            logfile("Invalid Servers file was not found %s" % fname)
+            logfile("saveasfile: Invalid Servers file was not found %s" % fname)
             return
         self.focus_ignore      = False
         Config['servers']      = fname
-        self.serverdata.save_serverfile(Config['servers'])
-        logfile("Saved servers file %s" % Config['servers'])
+        self.ServerData.save_serverfile(Config['servers'])
+        logfile("saveasfile: Saved servers file %s" % Config['servers'])
     def quit(self):
         self.save_config()
-        self.parent.destroy()
+        self.destroy()
         
     # Moving application on screen
     def StartMove(self, event):
@@ -1052,28 +1060,28 @@ class Window(Frame):
     def OnMotion(self, event):
         deltax = event.x - self.x
         deltay = event.y - self.y
-        x = self.parent.winfo_x() + deltax
-        y = self.parent.winfo_y() + deltay
-        self.parent.geometry("+%s+%s" % (x, y))
+        x = self.winfo_x() + deltax
+        y = self.winfo_y() + deltay
+        self.geometry("+%s+%s" % (x, y))
     def OnFocus(self, event):
         if Config['windowborder']: return # Ignore window focus events
         if self.minimized or self.focus_ignore: return
-        w=self.parent.focus_get()
+        w=self.focus_get()
         if w:
-            self.parent.overrideredirect(True)
+            self.overrideredirect(True)
             w.focus_force()
     def OnLostFocus(self, event):
         if Config['windowborder']: return # Ignore window focus events
         if self.minimized or self.focus_ignore: return
-        if not self.parent.focus_get(): self.parent.overrideredirect(False)
+        if not self.focus_get(): self.overrideredirect(False)
         
     def OnConfigure(self,event):
         if Config['windowborder']: return # Ignore window focus events
-        if self.minimized and not self.parent.focus_get(): # If minimized, and window does not have focus and there is a new event.
+        if self.minimized and not self.focus_get(): # If minimized, and window does not have focus and there is a new event.
             # Is most likely that the event is a maximize event, however the window isn't maximized until after this event.
             def task():
-                if self.minimized and self.parent.focus_get():
+                if self.minimized and self.focus_get():
                     self.minimized = False
-                    self.parent.overrideredirect(True)
-            self.parent.after(50,task) # Do task after 50 ms (Basically after the window is maximized)
+                    self.overrideredirect(True)
+            self.after(50,task) # Do task after 50 ms (Basically after the window is maximized)
             

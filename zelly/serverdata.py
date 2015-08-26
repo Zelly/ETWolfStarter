@@ -3,6 +3,7 @@ from os.path import isfile
 from re import compile
 import socket
 from time import time
+from zelly.constants import logfile
 
 
 ipmatch = compile("(%d+%.%d+%.%d+%.%d+)")
@@ -24,15 +25,15 @@ class ServerData:
         
     def load_serverfile(self,filename):
         if not filename:
-            print("No filepath given")
+            logfile("load_serverfile: No filepath given")
             return
         if not isfile(filename):
-            print("%s is not a file" % filename)
+            logfile("load_serverfile: %s is not a file" % filename)
             return
         with open(filename) as jsonfile:
             serversjson = json.load(jsonfile)
         if not serversjson or not "Servers" in serversjson or not serversjson['Servers']:
-            print("Did not load any server data")
+            logfile("load_serverfile: No servers loaded from file")
             self.Servers = [ ]
             return
         self.Servers = serversjson['Servers']
@@ -47,10 +48,10 @@ class ServerData:
         self.fs_homepath = serversjson['fs_homepath'] if 'fs_homepath' in serversjson else ''
         self.ETPath      = serversjson['ETPath'] if 'ETPath' in serversjson else ''
         self.parameters  = serversjson['parameters'] if 'parameters' in serversjson else ''
-        print("Loaded %d servers" % len(self.Servers))
+        logfile("load_serverfile: Loaded %d servers" % len(self.Servers))
     def save_serverfile(self,filename):
         if not filename:
-            print("No filepath given")
+            logfile("save_serverfile: No filepath given")
             return
         for Server in self.Servers:
             Server['map']        = None
@@ -62,7 +63,7 @@ class ServerData:
             Server['fs_game']    = None
         jsonfile = open(filename,'w')
         json.dump({'fs_basepath':self.fs_basepath,'fs_homepath':self.fs_homepath,'ETPath':self.ETPath,'parameters':self.parameters,'Servers':self.Servers},jsonfile,skipkeys=True,allow_nan=True, sort_keys=True, indent=4)
-        print("Saved %d servers" % len(self.Servers))
+        logfile("save_serverfile: Saved %d servers" % len(self.Servers))
         
         
     """
@@ -84,16 +85,16 @@ class ServerData:
     """
     def add_server(self,Server):
         if not Server:
-            print("No serverdata given")
+            logfile("add_server: No serverdata given")
             return
         if not type(Server) is dict:
-            print( "ServerData was not dict")
+            logfile("add_server: Serverdata was not valid type")
             return
         if not 'title' in Server:
-            print("Need title")
+            logfile("add_server: Server requires title")
             return
         if not 'address' in Server:
-            print( "Need address" )
+            logfile("add_server: Server requires address")
             return
         if not 'password' in Server: Server['password'] = ''
         if not 'fs_homepath' in Server: Server['fs_homepath'] = ''
@@ -109,23 +110,22 @@ class ServerData:
         Server['laststatus'] = 0
         Server['fs_game']    = 'etmain'
         if any( s['title'] == Server['title'] for s in self.Servers ):
-            print( "Title Already exists")
+            logfile("add_server: %s title already exists" % Server['title'])
             return
         if any( s['address'] == Server['address'] for s in self.Servers ):
-            print( "Address Already exists")
+            logfile("add_server: %s address already exists" % Server['address'])
             return
         self.Servers.append(Server)
-        print("Server added")
+        logfile("add_server: %s(%s) server was added" % ( Server['title'],Server['address']) )
     def getstatus(self,serverid=None):
         if serverid == None or not self.Servers[serverid]:
-            print("No Server id")
-            print(serverid)
+            logfile("getstatus: Invalid server id (%s)" % str(serverid))
             return
         
         Server = self.Servers[serverid]
         current = time()
         if Server['laststatus'] != 0 and (current - Server['laststatus']) < 2:
-            print("Too many checks in little time")
+            logfile("getstatus: Too many status checks in short time")
             return
         Server['laststatus'] = current
         
@@ -135,59 +135,55 @@ class ServerData:
             IP   = Server['address'].split(':')[0].strip()
             PORT = Server['address'].split(':')[1].strip()
         if not ipmatch.match(IP):
+            oldhostname=IP
             IP = getIP(IP)
-            print("Got IP from host: " + IP)
+            logfile("getstatus: resolved %s from %s" % (IP ,oldhostname) )
             
         PORT = int(PORT)
         if not IP:
-            print("IP was invalid")
+            logfile("getstatus: %s was not a valid ip" % (str(IP)) )
             return
         if not PORT:
-            print("Port was invalid")
+            logfile("getstatus: %s was not a valid port" % (str(PORT)) )
             return
         IP=IP.replace('\"',"").replace("'",'')
-        print("Current IP: " + IP)
-        print("Current PORT: " + str(PORT))
+        logfile("getstatus: %s:%s" % ( str(IP) , str(PORT) ) )
         ADDRESS = (IP,PORT)
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.settimeout(0.5)
         except OSError as e:
             s.close()
-            print("Error creating socket for %s:%d" % ADDRESS)
-            print(e)
+            logfile("getstatus: Error creating socket for %s:%d\n%s" % (ADDRESS[0],ADDRESS[1],str(e)) )
             return
         ping_start = time()
         try:
-            print(b'\xff\xff\xff\xffgetstatus')
-            print(s.sendto(b'\xff\xff\xff\xffgetstatus', ADDRESS),"Bytes sent")
+            logfile(b'getstatus: \xff\xff\xff\xffgetstatus')
+            logfile(str(s.sendto(b'\xff\xff\xff\xffgetstatus', ADDRESS)) + " bytes sent")
         except socket.timeout:
             s.close()
-            print("Server connection timed out for %s:%d" % ADDRESS)
+            logfile("getstatus: Send connection timed out(500ms) for %s:%d" % ADDRESS )
             return
         except OSError as e:
             s.close()
-            print("Error sending getstatus to %s:%d" % ADDRESS)
-            print(e)
-            print(ADDRESS)
+            logfile("getstatus: Error sending getstatus message to %s:%d\n%s" % (ADDRESS[0],ADDRESS[1],str(e)) )
             return
         while True:
             try:
                 buf = s.recvfrom(1024*4)[0]
             except socket.timeout:
-                print("Server connection timed out from %s:%d" % ADDRESS)
+                logfile("getstatus: Receive connection timed out(500ms) %s:%d" % ADDRESS )
                 s.close()
                 return
             except OSError as e:
-                print("Error receiving data")
-                print(e)
+                logfile("getstatus: Error receiving data %s:%d\n%s" % (ADDRESS[0],ADDRESS[1],str(e)) )
                 return
             if buf:
                 buf = buf[4:].decode()
             if buf.startswith('statusResponse\n'):
                 ping_end = time()
                 Server['ping'] = int( (ping_end-ping_start)*1000 )
-                print("Got server response in %d ms" % Server['ping'])
+                logfile("getstatus: Got response from %s:%d in %dms" % (ADDRESS[0],ADDRESS[1],Server['ping']) )
                 self.getStatusResponse(buf.replace('statusResponse\n',''),serverid)
                 break
             else:
@@ -196,12 +192,12 @@ class ServerData:
         
     def getStatusResponse(self,buffer=None,serverid=None):
         if not buffer or serverid == None or not self.Servers[serverid]: return
-        print(buffer)
+        logfile("Received %d bytes buffer" % len(buffer) )
         gamedata = buffer.split('\\')
-        if not gamedata:
-            print("getStatusResponse got invalid data")
-            return
         Server = self.Servers[serverid]
+        if not gamedata:
+            logfile("getstatusresponse: Invalid response from %s" % Server['address'] )
+            return
         Server['cvar']       = {}
         Server['playerlist'] = []
         Server['players']    = "-"
