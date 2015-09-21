@@ -7,6 +7,8 @@ import tkinter.filedialog
 import tkinter.font
 import tkinter.messagebox
 import tkinter.simpledialog
+import threading
+import queue
 
 from tkinter import END,W,E,N,S,NORMAL,DISABLED
 from zelly.update import WolfStarterUpdater
@@ -257,7 +259,7 @@ class ServerListFrame(tkinter.Frame):
         
         # Server List Titles
         self.servers_label = tkinter.Label(self, text="Title", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
-        self.servers       = tkinter.Listbox(self, width=25, relief="flat",
+        self.servers       = tkinter.Listbox(self, width=20, relief="flat",
                                      borderwidth=0,
                                      font=FONT,
                                      selectbackground=Config['LIST_SELECT_BACK'],
@@ -274,7 +276,7 @@ class ServerListFrame(tkinter.Frame):
         
         # Server Map
         self.servermap_label = tkinter.Label(self, text="Map", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
-        self.servermap       = tkinter.Listbox(self, width=10, relief="flat",
+        self.servermap       = tkinter.Listbox(self, width=20, relief="flat",
                                        borderwidth=0,
                                        font=FONT,
                                        selectbackground=Config['LIST_SELECT_BACK'],
@@ -308,7 +310,7 @@ class ServerListFrame(tkinter.Frame):
         
         # Server Ping
         self.serverping_label = tkinter.Label(self, text="Ping", font=FONT, background=Config['SERVERLIST_BACKGROUND'])
-        self.serverping       = tkinter.Listbox(self, width=10, relief="flat",
+        self.serverping       = tkinter.Listbox(self, width=5, relief="flat",
                                         borderwidth=0,
                                         font=FONT,
                                         selectbackground=Config['LIST_SELECT_BACK'],
@@ -594,6 +596,8 @@ class ServerFrame(tkinter.Frame):
         tkinter.Frame.__init__(self, parent, *args, **kwargs)
         self.MainWindow = parent
         
+        self.queue      = queue
+        
         self.config(background=Config['WINDOW_BACKGROUND'], padx=5, pady=5)
         
         self.HeaderFrame       = HeaderFrame(self)
@@ -622,10 +626,9 @@ class ServerFrame(tkinter.Frame):
         self.ServerDataFrame.clear()
         self.button_joinserver.hide()
         self.button_removeserver.hide()
-        for x in range(0, len(self.MainWindow.ServerData.Servers)):
-            self.serverstatus(x)
-        self.refresh_list(None)
-        
+        self.getserverlist()
+        #self.refresh_list(None)
+
     def refresh_list(self, selectid=None):
         self.ServerListFrame.clear()
         for Server in self.MainWindow.ServerData.Servers:
@@ -758,22 +761,40 @@ class ServerFrame(tkinter.Frame):
         openprocess(command_info[0])
         logfile("joinserver: Returning directory to %s" % cwd)
         chdir(cwd)
+    def getserverlist(self):
+        self.ServerListFrame.clear()
+        for x in range(0, len(self.MainWindow.ServerData.Servers)):
+            self.MainWindow.ServerData.getstatus(x)
+            self.setserverinfo(x)
+            self.ServerListFrame.add(self.MainWindow.ServerData.Servers[x])
+            self.update_idletasks()
+
+    def setserverinfo(self,serverid=None):
+        if serverid==None: return
+        Server = self.MainWindow.ServerData.Servers[serverid]
+        if not Server: return
+        if Server['ping'] <= 0: return
+        currentplayers=0
+        currentbots   =0
+        for Player in Server['playerlist']:
+            if Player['ping'] == 0:
+                currentbots+=1
+            else:
+                currentplayers+=1
+        Server['players'] = "%d/%d (%d)" % (currentplayers , int(Server['cvar']['sv_maxclients']) , currentbots)
     def serverstatus(self, selectid=None):
-        specificserver = False
+        if selectid == None: selectid = self.ServerListFrame.get()
         if selectid == None:
-            selectid = self.ServerListFrame.get()
-        else:
-            specificserver = True
-        if not specificserver:
-            self.ServerStatusFrame.clear()
-            self.ServerStatusFrame.hide()
-        if selectid == None: return
+            logfile("serverstatus: No serverid selected")
+            return
         
         Server = self.MainWindow.ServerData.Servers[selectid]
         
         if not Server:
             logfile("serverstatus: Error getting server playerlist %d" % selectid)
             return
+        self.ServerStatusFrame.clear()
+        self.ServerStatusFrame.hide()
         
         logfile("serverstatus: Getting serverstatus for %d (%s)" % (selectid, Server['title']))
         
@@ -783,43 +804,33 @@ class ServerFrame(tkinter.Frame):
             logfile("serverstatus: Could not ping server")
             return
         
-        if not specificserver:
-            if "sv_hostname" in Server['cvar']:
-                self.ServerStatusFrame.insertline("%s : %s" % ( "Server Name".ljust(11) , cleanstr(Server['cvar']['sv_hostname']).ljust(HEADERLENGTH) ) )
-            if "mapname" in Server['cvar']:
-                self.ServerStatusFrame.insertline("%s : %s" % ( "Map".ljust(11) , Server['cvar']['mapname'].ljust(HEADERLENGTH)) )
-            if "gamename" in Server['cvar']:
-                self.ServerStatusFrame.insertline("%s : %s" % ( "Mod".ljust(11), Server['cvar']['gamename'].ljust(HEADERLENGTH)) )
-            self.ServerStatusFrame.insertline("%s : %s" % ( "Ping".ljust(11) , (str(Server['ping']) + 'ms').ljust(HEADERLENGTH)) )
-            self.ServerStatusFrame.insertline('')
-            self.ServerStatusFrame.insertline("%s %s %s" % ("Name".ljust(PLAYER_NAME_LENGTH) , "Ping".ljust(PLAYER_PING_LENGTH) , "Score".ljust(PLAYER_SCORE_LENGTH)), "headerLine")
+    
+        if "sv_hostname" in Server['cvar']:
+            self.ServerStatusFrame.insertline("%s : %s" % ( "Server Name".ljust(11) , cleanstr(Server['cvar']['sv_hostname']).ljust(HEADERLENGTH) ) )
+        if "mapname" in Server['cvar']:
+            self.ServerStatusFrame.insertline("%s : %s" % ( "Map".ljust(11) , Server['cvar']['mapname'].ljust(HEADERLENGTH)) )
+        if "gamename" in Server['cvar']:
+            self.ServerStatusFrame.insertline("%s : %s" % ( "Mod".ljust(11), Server['cvar']['gamename'].ljust(HEADERLENGTH)) )
+        self.ServerStatusFrame.insertline("%s : %s" % ( "Ping".ljust(11) , (str(Server['ping']) + 'ms').ljust(HEADERLENGTH)) )
+        self.ServerStatusFrame.insertline('')
+        self.ServerStatusFrame.insertline("%s %s %s" % ("Name".ljust(PLAYER_NAME_LENGTH) , "Ping".ljust(PLAYER_PING_LENGTH) , "Score".ljust(PLAYER_SCORE_LENGTH)), "headerLine")
         
-        currentplayers = 0
-        currentbots    = 0
         for Player in Server['playerlist']:
-            if Player['ping'] == 0:
-                currentbots += 1
-            else:
-                currentplayers += 1
-            if not specificserver:
-                name = cleanstr(Player['name'][:PLAYER_NAME_LENGTH]) if len(cleanstr(Player['name'])) > PLAYER_NAME_LENGTH else cleanstr(Player['name'])
-                self.ServerStatusFrame.insertline("%s %s %s" % (name.ljust(PLAYER_NAME_LENGTH) , str(Player['ping']).ljust(PLAYER_PING_LENGTH) , str(Player['score']).ljust(PLAYER_SCORE_LENGTH)))
-        Server['players'] = "%d/%d (%d)" % (currentplayers , int(Server['cvar']['sv_maxclients']) , currentbots)
+            name = cleanstr(Player['name'][:PLAYER_NAME_LENGTH]) if len(cleanstr(Player['name'])) > PLAYER_NAME_LENGTH else cleanstr(Player['name'])
+            self.ServerStatusFrame.insertline("%s %s %s" % (name.ljust(PLAYER_NAME_LENGTH) , str(Player['ping']).ljust(PLAYER_PING_LENGTH) , str(Player['score']).ljust(PLAYER_SCORE_LENGTH)))
         
-        if not specificserver:
-            self.ServerStatusFrame.insertline('')
-            self.ServerStatusFrame.insertline('')
-            self.ServerStatusFrame.insertline("%s | %s" % ("Cvar".ljust(HALFLEN) , "Value".ljust(HALFLEN)) , "headerLine")
-            for Cvar in Server['cvar']:
-                self.ServerStatusFrame.insertline("%s = %s" % (Cvar.ljust(HALFLEN) , Server['cvar'][Cvar].ljust(HALFLEN)))
-            
+        self.ServerStatusFrame.insertline('')
+        self.ServerStatusFrame.insertline('')
+        self.ServerStatusFrame.insertline("%s | %s" % ("Cvar".ljust(HALFLEN) , "Value".ljust(HALFLEN)) , "headerLine")
+        for Cvar in Server['cvar']:
+            self.ServerStatusFrame.insertline("%s = %s" % (Cvar.ljust(HALFLEN) , Server['cvar'][Cvar].ljust(HALFLEN)))
+        self.setserverinfo(selectid)
         self.refresh_list(selectid)
-        if not specificserver:
-            if 'g_needpass' in Server['cvar'] and int(Server['cvar']['g_needpass']) == 1:
-                self.ServerDataFrame.showpassword()
-            else:
-                self.ServerDataFrame.hidepassword()
-            self.ServerStatusFrame.show()
+        if 'g_needpass' in Server['cvar'] and int(Server['cvar']['g_needpass']) == 1:
+            self.ServerDataFrame.showpassword()
+        else:
+            self.ServerDataFrame.hidepassword()
+        self.ServerStatusFrame.show()
     # Methods
     def getpath(self, browse_var=None, updatemethod=None):
         if not browse_var: return
@@ -970,6 +981,7 @@ class Window(tkinter.Tk):
         self.bind("<FocusIn>"         , self.OnFocus)
         self.bind("<FocusOut>"        , self.OnLostFocus)
         self.bind("<Configure>"       , self.OnConfigure)
+        self.protocol("WM_DELETE_WINDOW", self.quit)
         self.iconbitmap('WolfStarterLogo.ico')
         
         self.mainframe = tkinter.Frame(self,background=Config["WINDOW_BACKGROUND"])

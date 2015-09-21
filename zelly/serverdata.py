@@ -54,15 +54,16 @@ class ServerData:
             logfile("save_serverfile: No filepath given")
             return
         for Server in self.Servers:
-            Server['map']        = None
-            Server['ping']       = None
-            Server['players']    = None
-            Server['playerlist'] = None
-            Server['cvar']       = None
-            Server['laststatus'] = None
-            Server['fs_game']    = None
+            if 'map' in Server: del Server['map']
+            if 'ping' in Server: del Server['ping']
+            if 'players' in Server: del Server['players']
+            if 'playerlist' in Server: del Server['playerlist']
+            if 'cvar' in Server: del Server['cvar']
+            if 'laststatus' in Server: del Server['laststatus']
+            if 'fs_game' in Server: del Server['fs_game']
+        
         jsonfile = open(filename,'w')
-        json.dump({'fs_basepath':self.fs_basepath,'fs_homepath':self.fs_homepath,'ETPath':self.ETPath,'parameters':self.parameters,'Servers':self.Servers},jsonfile,skipkeys=True,allow_nan=True, sort_keys=True, indent=4)
+        json.dump({'fs_basepath':self.fs_basepath,'fs_homepath':self.fs_homepath,'ETPath':self.ETPath,'parameters':self.parameters,'Servers':self.Servers},jsonfile,skipkeys=False,allow_nan=False, sort_keys=True, indent=4)
         logfile("save_serverfile: Saved %d servers" % len(self.Servers))
         
         
