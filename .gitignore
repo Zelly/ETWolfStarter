@@ -68,3 +68,6 @@ target/
 # Eclipse IDE
 .project
 .pydevproject
+
+.idea/
+.idea
