@@ -11,6 +11,7 @@ import tkinter.simpledialog
 from tkinter import END, W, E, N, S, NORMAL, DISABLED
 from zelly.serverdata import ServerData
 from zelly.constants import *
+from zelly.update import WolfStarterUpdater
 
 FONT = None
 Config = {
@@ -42,7 +43,9 @@ Config = {
     'windowborder': False,
     'checkupdate': True,
 }
-
+# TODO Make server list expand to amount of servers.
+# TODO Make column length expand (Up until max value)
+# TODO Add rcon window
 clean_pattern = compile("(\^.)")  # (\^[\d\.\w=\-]?)
 
 
@@ -92,11 +95,9 @@ class MenuButton(tkinter.Button):
 class BrowseButton(tkinter.Button):
     """File browse button share similar style to MenuButtons"""
 
-    def __init__(self, master=None, dir_var=None, cnf=None, **kw):
+    def __init__(self, master=None, cnf=None, **kw):
         if not cnf:
             cnf = {}
-        if not dir_var:
-            logfile("Browse button created without dir var")
         tkinter.Button.__init__(self, master, cnf, **kw)
         self.parent = master
         self.config(background=Config['BROWSE_BUTTON_BACKGROUND'],
@@ -203,7 +204,7 @@ class NavBar(tkinter.Frame):
 
     def settings(self):
         self.MainWindow.ServerFrame.close_window()
-        Settings(self.MainWindow)  # Mainframe here?
+        SettingsFrame(self.MainWindow)  # Mainframe here?
 
 
 class HeaderFrame(tkinter.Frame):
@@ -616,19 +617,19 @@ class ServerDataFrame(tkinter.Frame):
             return
         logfile("update_server: Updating %s at %d" % (server['title'], select_id))
 
-        if self.servertitle_var.get() is None:
+        if self.servertitle_var.get() is not None:
             server['title'] = self.servertitle_var.get()
-        if self.serveraddress_var.get() is None:
+        if self.serveraddress_var.get() is not None:
             server['address'] = self.serveraddress_var.get()
-        if self.serverpassword_var.get() is None:
+        if self.serverpassword_var.get() is not None:
             server['password'] = self.serverpassword_var.get()
-        if self.serverparams_var.get() is None:
+        if self.serverparams_var.get() is not None:
             server['parameters'] = self.serverparams_var.get()
-        if self.serverfs_basepath_var.get() is None:
+        if self.serverfs_basepath_var.get() is not None:
             server['fs_basepath'] = self.serverfs_basepath_var.get()
-        if self.serverfs_homepath_var.get() is None:
+        if self.serverfs_homepath_var.get() is not None:
             server['fs_homepath'] = self.serverfs_homepath_var.get()
-        if self.serveretpath_var.get() is None:
+        if self.serveretpath_var.get() is not None:
             server['ETPath'] = self.serveretpath_var.get()
         self.ServerFrame.refresh_list(select_id)
 
@@ -1013,11 +1014,15 @@ class ServerFrame(tkinter.Frame):
                                                    title="Navigate to your path")
         self.MainWindow.focus_ignore = False
 
-        if dir_path and isdir(dir_path):
-            browse_var.set(dir_path)
-            update_method(self)
-        else:
-            logfile("getpath-dialog: Could not find directory path")
+        if not dir_path:
+            logfile("get_path: dir_path is empty")
+            return
+        if not isfile(dir_path):
+            logfile("get_path: dir_path is not a valid file")
+            return
+
+        browse_var.set(dir_path)
+        update_method(self)
 
     def get_file_path(self, browse_var=None, update_method=None):
         if not browse_var:
@@ -1033,11 +1038,15 @@ class ServerFrame(tkinter.Frame):
                                                        filetypes=(("exe files", "*.exe"), ("All files", "*")), )
         self.MainWindow.focus_ignore = False
 
-        if file_path and isfile(file_path):
-            browse_var.set(file_path)
-            update_method(self)
-        else:
-            logfile("getfilepath-dialog: Could not find filepath")
+        if not file_path:
+            logfile("get_file_path: file_path is empty")
+            return
+        if not isfile(file_path):
+            logfile("get_file_path: file_path is not a valid file")
+            return
+
+        browse_var.set(file_path)
+        update_method(self)
 
     def close_window(self):
         self.button_addserver.destroy()
@@ -1046,6 +1055,14 @@ class ServerFrame(tkinter.Frame):
         for child in self.winfo_children():
             child.destroy()
         self.destroy()
+
+
+class RconWindow(tkinter.Toplevel):
+    def __init__(self, parent=None, server=None):
+        tkinter.Toplevel.__init__(self, parent)
+        self.MainWindow = parent
+
+        self.title("Remote console - %s" % server['address'])
 
 
 class LogWindow(tkinter.Toplevel):
@@ -1099,7 +1116,7 @@ class SettingCheckButton(tkinter.Checkbutton):
             return False
 
 
-class Settings(tkinter.Frame):
+class SettingsFrame(tkinter.Frame):
     """Sepearate window for settings"""
 
     def __init__(self, parent, *args, **kwargs):
@@ -1120,7 +1137,7 @@ class Settings(tkinter.Frame):
         self.windowborder = SettingCheckButton(self, "Show the Windows's window border at all times", 5)
         self.check_update = SettingCheckButton(self, "Check for update on startup", 6)
 
-        self.savebutton = MenuButton(self, 0, 6, text="save", command=self.close_window)
+        self.savebutton = MenuButton(self, 0, 7, text="save", command=self.close_window)
         self.savebutton.show()
 
         if Config['launchmod']:
