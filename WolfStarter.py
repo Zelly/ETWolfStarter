@@ -4,10 +4,11 @@ from sys import exc_info
 from traceback import format_exception
 from sys import argv
 
+
 if __name__ == '__main__':
     logfile(argv)
 
-    logfile("Program Start")
+    logfile("PROGRAM START".center(50, "-"))
     try:
         Window()
     except:
@@ -15,4 +16,4 @@ if __name__ == '__main__':
         lines = format_exception(e1, e2, e3)
         logfile(''.join('' + line for line in lines))
         raise
-    logfile("Program End")
+    logfile("PROGRAM END".center(50, "-"))
